@@ -38,8 +38,8 @@ KIT_DIR = os.path.join(SAMPLES, "aasimonster")
 
 NAM_5150 = os.path.join(TOOLS, "NAM_models/Helga B 5150 BlockLetter - Boosted.nam")
 NAM_6534 = os.path.join(TOOLS, "NAM_models/Helga B 6534+ OD808.nam")
-NAM_5153 = os.path.join(TOOLS, "IR/_NAM/5153-Red-DailyDriver/5153-Red-DailyDriver.nam")
-NAM_AC30 = os.path.join(TOOLS, "IR/_NAM/VOX AC30 CH/WARM")  # dir; pick file inside
+NAM_JSX = os.path.join(TOOLS, "NAM_models/Helga B JSX Ultra - OD808.nam")
+NAM_CRUNCH = os.path.join(TOOLS, "NAM_models/Helga B JSX-Crunch-NoBoost-0,004.nam")
 NAM_DUG = os.path.join(TOOLS, "NAM_models/Jason Z Tech21 dUg DP3X bass preamp pedal all dimed no shift.nam")
 
 IR_57 = os.path.join(SAMPLES, "kalthallen/KalthallenCabsIR/Kalthallen IRs/001a-SM57-V30-4x12.wav")
@@ -94,36 +94,17 @@ def load_midimap(path):
 
 
 def pick_drum_mapping(midimap):
-    """Map our symbolic drum names onto this kit's instrument names."""
-    names = list(midimap.keys())
-
-    def find(*cands):
-        for c in cands:
-            for n in names:
-                if c.lower() == n.lower():
-                    return n
-        for c in cands:
-            for n in names:
-                if c.lower() in n.lower():
-                    return n
-        return None
-
-    m = {
-        "kick_l": find("KdrumL", "KickL", "Kdrum_L", "kick"),
-        "kick_r": find("KdrumR", "KickR", "Kdrum_R", "kick"),
-        "snare": find("Snare"),
-        "china": find("China1", "China"),
-        "china2": find("China2", "China"),
-        "crash1": find("Crash1", "Crash"),
-        "crash2": find("Crash2", "Crash"),
-        "ride_bell": find("RideB", "Bell", "Ride"),
-        "ride": find("Ride"),
-        "hihat_closed": find("HihatC", "HiHatC", "Hihat"),
-        "tom1": find("Tom1", "Tom2", "Tom"),
-        "tom2": find("Tom2", "Tom3", "Tom"),
-        "tom_floor": find("FTom", "Ftom", "FloorTom", "Tom4"),
+    """Map our symbolic drum names onto The Aasimonster's instrument names."""
+    want = {
+        "kick_l": "kick_l", "kick_r": "kick_r",
+        "snare": "snare_on_center",
+        "china": "china_18_inch",
+        "crash1": "crash1", "crash2": "crash2",
+        "ride_bell": "ride_bell1", "ride": "ride",
+        "hihat_closed": "hihat_closed1",
+        "tom1": "tom_1", "tom2": "tom_2", "tom_floor": "tom_4",
     }
-    return {k: midimap[v] for k, v in m.items() if v}
+    return {k: midimap[v] for k, v in want.items() if v in midimap}
 
 
 def write_drum_midi(score, path, midimap_path):
@@ -158,7 +139,7 @@ def write_all_midis():
     write_track_midi(score, score.tracks["bass"], f"{MIDI_DIR}/bass.mid",
                      pitch_of=lambda n: n.pitch + 12)
     write_drum_midi(score, f"{MIDI_DIR}/drums.mid",
-                    os.path.join(KIT_DIR, "Midimap.xml"))
+                    os.path.join(KIT_DIR, "midimap.xml"))
     for name in ("strings", "strings_stac", "choir"):
         write_track_midi(score, score.tracks[name], f"{MIDI_DIR}/{name}.mid")
     return score, sec
@@ -185,26 +166,40 @@ def render_drums():
     out_prefix = os.path.join(STEMS, "drums", "dg")
     os.makedirs(os.path.dirname(out_prefix), exist_ok=True)
     run(["drumgizmo", "-i", "midifile",
-         "-I", f"file={MIDI_DIR}/drums.mid,midimap={KIT_DIR}/Midimap.xml",
+         "-I", f"file={MIDI_DIR}/drums.mid,midimap={KIT_DIR}/midimap.xml",
          "-o", "wavfile", "-O", f"file={out_prefix},srate={SR}",
          kit_xml])
 
 
 # ------------------------------------------------------------------ amp sim
 
+def load_nam_model(nam_path):
+    """Load a .nam capture. Supports the WaveNet 0.5.0 export format used by
+    the Helga B / Jason Z community captures (config keys: layers/head/
+    head_scale -> nam 0.10's layers_configs/head_config/head_scale)."""
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "_stubs"))
+    import torch
+    from nam.models import wavenet
+    with open(nam_path) as fp:
+        d = json.load(fp)
+    if d.get("architecture") != "WaveNet":
+        raise ValueError(f"unsupported architecture {d.get('architecture')}")
+    cfg = d["config"]
+    m = wavenet.WaveNet(layers_configs=cfg["layers"],
+                        head_config=cfg.get("head"),
+                        head_scale=cfg.get("head_scale", 1.0),
+                        sample_rate=d.get("sample_rate"))
+    m.import_weights(torch.tensor(d["weights"]))
+    m.eval()
+    return m
+
+
 def nam_process(in_wav, out_wav, nam_path, in_gain_db=0.0, out_gain_db=0.0):
     """Mono-process a DI through a .nam capture (WaveNet on CPU)."""
-    import types
-    tkstub = types.ModuleType("tkinter"); tkstub.__file__ = "/dev/null/tk.py"
-    sys.modules.setdefault("tkinter", tkstub)
     import torch
-    from nam.models import init_from_nam
-
     x = dsp.load(in_wav)
-    mono = np.mean(x, axis=0).astype(np.float32) * dsp.db(in_gain_db)
-    with open(nam_path) as fp:
-        model = init_from_nam(json.load(fp))
-    model.eval()
+    mono = np.mean(x, axis=0).astype(np.float32) * np.float32(dsp.db(in_gain_db))
+    model = load_nam_model(nam_path)
     with torch.no_grad():
         y = model(torch.from_numpy(mono), pad_start=True).numpy()
     y = np.asarray(y, dtype=np.float64) * dsp.db(out_gain_db)
@@ -259,27 +254,27 @@ def main(stage="all"):
 
     # ---- guitars: DI -> gain-stage -> tight HPF -> NAM -> IR blend
     jobs = [
-        ("gtr_l", GTX, NAM_5150, [(IR_57, 0.0), (IR_421, -4.0)]),
-        ("gtr_r", GTX, NAM_6534, [(IR_57, 0.0), (IR_421, -4.0)]),
-        ("lead",  GTX, find_nam_in(NAM_5153), [(IR_421, 0.0), (IR_57, -3.0)]),
+        ("gtr_l", GTX, NAM_5150, 4.0, [(IR_57, 0.0), (IR_421, -4.0)]),
+        ("gtr_r", GTX, NAM_6534, 4.0, [(IR_57, 0.0), (IR_421, -4.0)]),
+        ("lead",  GTX, NAM_JSX, 2.0, [(IR_421, 0.0), (IR_57, -3.0)]),
     ]
     if stage in ("all", "guitars"):
-        for name, sfz, nam, irs in jobs:
+        for name, sfz, nam, gin, irs in jobs:
             di = f"{STEMS}/{name}_di.wav"
             render_sfz(sfz, f"{MIDI_DIR}/{name}.mid", di)
-            gain_stage(di, di, -10.0)
+            gain_stage(di, di, -6.0)
             x = dsp.load(di)
             x = dsp.hpf(x, 110, order=2)     # pre-amp tightener
             dsp.save(di, x)
             amped = f"{STEMS}/{name}_amp.wav"
-            nam_process(di, amped, nam, in_gain_db=0.0)
+            nam_process(di, amped, nam, in_gain_db=gin)
             cab_ir(amped, f"{STEMS}/{name}.wav", irs)
 
-        # clean guitar: DI -> AC30 warm -> 421 IR light
+        # clean guitar: DI -> JSX crunch at low input (edge of breakup)
         di = f"{STEMS}/clean_di.wav"
         render_sfz(GTX, f"{MIDI_DIR}/clean.mid", di)
-        gain_stage(di, di, -14.0)
-        nam_process(di, f"{STEMS}/clean_amp.wav", find_nam_in(NAM_AC30))
+        gain_stage(di, di, -16.0)
+        nam_process(di, f"{STEMS}/clean_amp.wav", NAM_CRUNCH)
         cab_ir(f"{STEMS}/clean_amp.wav", f"{STEMS}/clean.wav", [(IR_421, 0.0)])
 
     # ---- bass: DI -> split: lows clean / mids dUg grit

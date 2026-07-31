@@ -43,8 +43,8 @@ def build_drums():
     """Sum DrumGizmo's mic channels into kick/snare/tom/cymbal/room buses,
     process each per research, add the parallel smash bus, glue + clip."""
     chans = {}
-    for f in glob.glob(os.path.join(STEMS, "drums", "dg-*.wav")):
-        base = os.path.basename(f)[3:-4].lower()
+    for f in glob.glob(os.path.join(STEMS, "drums", "dg*.wav")):
+        base = os.path.basename(f)[2:-4].lower()   # e.g. "ohl-0", "kdruml-7"
         chans[base] = dsp.load(f)
     if not chans:
         raise RuntimeError("no drum channels rendered")
@@ -59,14 +59,36 @@ def build_drums():
                 got.append(name)
         return out, got
 
-    kick, got_k = bus("kdrum", "kick")
-    snare, got_s = bus("snare")
+    # Aasimonster channels: KdrumL/R, Trigger (kick click), Snare_top/bottom,
+    # Snare_trigger, Tom1-4, OHL/OHR, AmbL/AmbR, Hihat, Ride
+    kick, got_k = bus("kdrum")
+    ktrig, _ = bus("trigger", exclude=("snare",))
+    kick = kick + dsp.pad_to(dsp.to_stereo(ktrig), n) * db(-4.0)
+    snare, got_s = bus("snare_top", "snare_bottom")
+    strig, _ = bus("snare_trigger")
+    snare = snare + dsp.pad_to(dsp.to_stereo(strig), n) * db(-8.0)
     toms, got_t = bus("tom")
-    cyms, got_c = bus("overhead", "oh", "amb", exclude=("kdrum",))
-    hats, got_h = bus("hihat", "ride", "china", "crash", "zil", "cymbal")
+
+    def pair(lkey, rkey):
+        out = np.zeros((2, n))
+        for name, x in chans.items():
+            m = np.mean(dsp.pad_to(dsp.to_stereo(x), n), axis=0)
+            if lkey in name:
+                out[0] += m
+            elif rkey in name:
+                out[1] += m
+        return out
+    ohs = pair("ohl", "ohr"); got_c = ["ohl", "ohr"]
+    amb = pair("ambl", "ambr"); got_a = ["ambl", "ambr"]
+    hats, got_h = bus("hihat", "ride")
     print("drum buses:", dict(kick=got_k, snare=got_s, toms=got_t,
-                              oh=got_c, cyms=got_h))
-    cyms = cyms + hats
+                              oh=got_c, amb=got_a, close_cym=got_h))
+    # stereo-place OH pair; room compressed low; close cymbal mics tucked in
+    cyms = ohs + hats * db(-3.0)
+    room = fx(Pedalboard([Compressor(threshold_db=-30, ratio=8, attack_ms=2,
+                                     release_ms=60), HighpassFilter(250)]),
+              amb) * db(-10.0)
+    cyms = cyms + room
 
     kick = fx(Pedalboard([
         HighpassFilter(35),
