@@ -436,13 +436,23 @@ def main():
     dsp.save(os.path.join(MIX, songmod.title() + "_vocal_ready.wav"), mixbus)
 
     # --------- mastering
-    m = fx(Pedalboard([
-        HighpassFilter(24),
-        LowShelfFilter(100, 0.8),
-        PeakFilter(400, -0.8, 1.2),
-        PeakFilter(4500, 1.8, 0.9),      # presence lift (QC: was -10 rel mids)
-        HighShelfFilter(9000, 1.8),
-    ]), mixbus)
+    if PROFILE == "techdeath":
+        # Otero master tilt: brighter/drier than deathcore — articulation
+        m = fx(Pedalboard([
+            HighpassFilter(28),
+            LowShelfFilter(100, 0.3),
+            PeakFilter(300, -1.5, 1.0),
+            HighShelfFilter(2500, 2.0),
+            HighShelfFilter(9000, 1.5),
+        ]), mixbus)
+    else:
+        m = fx(Pedalboard([
+            HighpassFilter(24),
+            LowShelfFilter(100, 0.8),
+            PeakFilter(400, -0.8, 1.2),
+            PeakFilter(4500, 1.8, 0.9),  # presence lift (QC: was -10 rel mids)
+            HighShelfFilter(9000, 1.8),
+        ]), mixbus)
     lo, hi = dsp.butter_split(m, 120)
     lo = fx(Pedalboard([Compressor(threshold_db=-24, ratio=2.0, attack_ms=25,
                                    release_ms=180)]), lo)
