@@ -36,7 +36,12 @@ def fx(board, x):
 
 def stem(name):
     p = os.path.join(STEMS, name + ".wav")
-    return dsp.load(p) if os.path.exists(p) else None
+    if not os.path.exists(p):
+        return None
+    x = dsp.load(p)
+    if dsp.peak_db(x) < -70.0:      # rendered but silent (track unused)
+        return None
+    return x
 
 
 # ------------------------------------------------------------------ drums
