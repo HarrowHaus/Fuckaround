@@ -319,8 +319,9 @@ def main():
     lo, hi = dsp.butter_split(m, 120)
     lo = fx(Pedalboard([Compressor(threshold_db=-24, ratio=2.0, attack_ms=25,
                                    release_ms=180)]), lo)
-    m = lo + hi
-    m = dsp.soft_clip(m, drive_db=3.0)
+    # clip highs only: clipping sub sines squares them off and creates huge
+    # intersample overshoot that no sample-peak limiter can catch
+    m = lo + dsp.soft_clip(hi, drive_db=3.0)
 
     # push into target loudness with clip+limit iterations, converging LUFS
     # and true peak TOGETHER (sub-heavy material creates intersample peaks
@@ -330,7 +331,10 @@ def main():
     for _ in range(6):
         cur = dsp.lufs(m)
         m = m * db(min(6.0, target - cur))
-        m = dsp.soft_clip(m, drive_db=1.5)
+        mlo, mhi = dsp.butter_split(m, 100)
+        mlo = fx(Pedalboard([Compressor(threshold_db=-12, ratio=6.0,
+                                        attack_ms=8, release_ms=120)]), mlo)
+        m = mlo + dsp.soft_clip(mhi, drive_db=1.5)
         m = fx(Pedalboard([Limiter(threshold_db=-1.5, release_ms=60)]), m)
         tp = dsp.true_peak_db(m)
         if tp > -1.0:
