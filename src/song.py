@@ -77,6 +77,9 @@ class Song:
         self.s.set_tempo(self.sec["final_bd"], BPM_FINAL)
         # the re-drop: even slower after the false ending
         self.s.set_tempo(self.sec["final_bd"] + bars(9), BPM_REDROP)
+        # stepped ramp-down outro (the Lorna outro crawl: hard steps, not rit.)
+        self.s.set_tempo(self.sec["outro"], 80.0)
+        self.s.set_tempo(self.sec["outro"] + bars(4), 72.0)
 
         for nm in ("gtr_l", "gtr_r", "lead", "clean", "bass", "drums",
                    "strings", "strings_stac", "choir", "subdrop", "fx"):
@@ -183,49 +186,67 @@ class Song:
             if i % 2 == 0:
                 self.drum(t, cym, 86 if i % 4 else 94)
 
-    # ---- 16th-grid blasts: at 152-160 BPM these are the 300-320 equivalents
-    def blast_trad16(self, t0, nbars, cym="ride_bell", vel_s=100, vel_k=96):
-        """Traditional blast doubled: snare every 16th, kick interleaved a
-        32nd behind — combined ~21 hits/sec at 160."""
+    # ---- 16th-grid blasts at the 152-160 BPM sections = 300-320 equivalents
+    # (grids verified against Lorna Shore / STP / SotS transcriptions:
+    # kick-led alternation, flat grid-locked kicks, narrow snare band)
+    def blast_trad16(self, t0, nbars, cym="ride_bell", vel_s=96, vel_k=114):
+        """Traditional blast, kick-led: kick every 16th (flat, grid-locked),
+        snare interleaved a 32nd behind, ride 8ths with the kick."""
         for i in range(int(nbars * 16)):
             t = t0 + i * 0.25
-            self.drum(t, "snare", vel_ladder(vel_s, i, (0, -9, -4, -11)))
-            self.drum(t + 0.125, "kick", vel_ladder(vel_k, i), dur=0.1)
+            self.drum(t, "kick", vel_k + (2 if i % 4 == 0 else 0),
+                      dur=0.1, grid=True)
+            self.drum(t + 0.125, "snare",
+                      vel_ladder(vel_s, i, (4, -4, 0, -6)))
             if i % 2 == 0:
                 self.drum(t, cym, 82 if i % 4 else 92)
 
     def blast_hammer16(self, t0, nbars, cym="china", vel=104):
-        """Hammer at 16ths: kick+snare unison wall."""
+        """Hammer at 16ths: kick+snare unison wall, sample-accurate unison
+        (real triggers get edited to land together — no jitter)."""
         for i in range(int(nbars * 16)):
             t = t0 + i * 0.25
-            self.drum(t, "kick", vel_ladder(vel - 4, i), dur=0.1)
-            self.drum(t, "snare", vel_ladder(vel, i, (0, -8, -3, -10)))
+            self.drum(t, "kick", 114 + (2 if i % 4 == 0 else 0),
+                      dur=0.1, grid=True)
+            self.drum(t, "snare", vel_ladder(vel, i, (4, -3, 0, -5)),
+                      grid=True)
             if i % 2 == 0:
                 self.drum(t, cym, 84 if i % 4 else 93)
 
-    def blast_bomb16(self, t0, nbars, cym="china", vel=104):
-        """Bomb blast: snare 16ths, kicks doubled underneath in 32nds."""
+    def blast_bomb16(self, t0, nbars, vel=108):
+        """Bomb blast: kick EVERY 32nd (flat wall, grid-locked), snare 16ths
+        unison with the even kicks, china on-beat / crash off-8th
+        alternating — the climax blast."""
         for i in range(int(nbars * 16)):
             t = t0 + i * 0.25
-            self.drum(t, "snare", vel_ladder(vel, i, (0, -8, -3, -10)))
-            self.drum(t, "kick", vel_ladder(vel - 8, i), dur=0.08)
-            self.drum(t + 0.125, "kick", vel_ladder(vel - 14, i), dur=0.08)
-            if i % 2 == 0:
-                self.drum(t, cym, 84 if i % 4 else 92)
+            self.drum(t, "snare", vel_ladder(vel, i, (4, -3, 0, -5)),
+                      grid=True)
+            self.drum(t, "kick", 114, dur=0.08, grid=True)
+            self.drum(t + 0.125, "kick", 112, dur=0.08, grid=True)
+            if i % 4 == 0:
+                self.drum(t, "china", 104 if i % 8 else 112)
+            elif i % 4 == 2:
+                self.drum(t, "crash2", 98)
 
-    def blast_gravity16(self, t0, nbars, cym="china", vel=102):
-        """Gravity blast: one-handed roll = snare 32nds (strong downstroke on
-        the 16th, weaker upstroke on the off-32nd), kick 16ths, china
-        quarters. The Olympics move."""
+    def blast_gravity16(self, t0, nbars, vel=100):
+        """Gravity blast: one-handed roll = snare every 32nd in strong/weak
+        PAIRS (downstroke/upstroke), whole lane quieter than a normal blast;
+        kick 16ths flat; free hand rides 8ths. The Olympics move."""
         for i in range(int(nbars * 16)):
             t = t0 + i * 0.25
-            self.drum(t, "snare", vel_ladder(vel, i, (0, -6, -3, -8)))
+            self.drum(t, "snare", vel_ladder(vel, i, (6, -2, 2, -4)))
             self.drum(t + 0.125, "snare",
-                      vel_ladder(vel - 24, i, (0, -5, -2, -6)))
-            self.drum(t, "kick", vel_ladder(vel - 6, i), dur=0.1)
-        for b in range(int(nbars)):
-            for q in range(4):
-                self.drum(t0 + b * BAR + q, cym, 108 if q == 0 else 96)
+                      vel_ladder(vel - 22, i, (0, -4, -2, -6)))
+            self.drum(t, "kick", 112, dur=0.1, grid=True)
+            if i % 2 == 0:
+                self.drum(t, "ride", 96 if i % 4 else 106)
+
+    def kick_burst32(self, t0, nbeats=2.0, vel=114):
+        """Kick-only 32nd burst — announces a blast gear change (SotS m.22
+        move). Ends ON the next downbeat; grid-locked."""
+        n = int(nbeats * 8)
+        for i in range(n):
+            self.drum(t0 + i * 0.125, "kick", vel, dur=0.08, grid=True)
 
     def dkick16(self, t0, nbars, snare_beats=(1.0, 3.0), cym="ride_bell"):
         for i in range(int(nbars * 16)):
@@ -250,6 +271,21 @@ class Song:
         """One beat of KKSS quads into a downbeat."""
         for i, d in enumerate(["kick", "kick", "snare", "snare"] * 2):
             self.drum(t0 + i * 0.125, d, 104 + (i % 4 == 2) * 10)
+
+    def fill_toms_over_wall(self, t0):
+        """One bar: tom quads riding ON TOP of a continuing 32nd kick wall
+        (the feet never stop — Hellfire m.27 move)."""
+        for i in range(32):
+            self.drum(t0 + i * 0.125, "kick", 113, dur=0.08, grid=True)
+        seq = ["snare", "snare", "tom1", "tom1", "tom2", "tom2",
+               "tom_floor", "tom_floor"] * 2
+        for i, d in enumerate(seq):
+            self.drum(t0 + i * 0.25, d, 102 + (i % 2 == 0) * 10)
+
+    def kick_wall(self, t0, nbars):
+        """Grid-locked 32nd kick wall under chugs — the tension engine."""
+        for i in range(int(nbars * 32)):
+            self.drum(t0 + i * 0.125, "kick", 113, dur=0.08, grid=True)
 
     def crash_downbeat(self, t, which="crash1", vel=112, with_kick=True):
         self.drum(t, which, vel)
@@ -360,11 +396,14 @@ class Song:
             for i in range(8):
                 self.bassn(t0 + b * BAR + i * 0.5, 0.45,
                            32 + row[i * 2], 102, "pick")
-        # blast gear-box at 160: trad16 -> hammer -> trad -> bomb -> GRAVITY
+        # blast gear-box at 160: trad -> hammer -> trad -> kick-burst
+        # announcement -> bomb -> GRAVITY (each gear adds limbs, per the
+        # verified escalation arc)
         self.blast_trad16(t0, 4)
         self.blast_hammer16(t0 + bars(4), 2)
         self.blast_trad16(t0 + bars(6), 2, cym="china")
-        self.blast_trad16(t0 + bars(8), 4)
+        self.blast_trad16(t0 + bars(8), 3.5)
+        self.kick_burst32(t0 + bars(11) + 2.0, 2.0)   # gear-change spool-up
         self.blast_bomb16(t0 + bars(12), 2)
         self.blast_gravity16(t0 + bars(14), 2)     # the Olympics moment
         t = t0 + bars(8)
@@ -459,7 +498,8 @@ class Song:
                                         frozenset({"vib", "harm"})))
         self.blast_trad16(t0, 8)
         self.blast_hammer16(t0 + bars(8), 6)
-        self.blast_bomb16(t0 + bars(14), 2)
+        self.blast_bomb16(t0 + bars(14), 1)
+        self.fill_toms_over_wall(t0 + bars(15))   # toms over the kick wall
         for rep in range(4):
             for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
                 t = t0 + bars(rep * 4 + i)
@@ -478,6 +518,7 @@ class Song:
             ], kick=True)
         self.china_quarters(t, 8)
         self.halftime_snare(t, 8)
+        self.kick_wall(t + bars(6), 2)   # tension engine into verse2
         self.lead.add(t, bars(2), 80 + 8, 110, "vib")
         self.lead.add(t + bars(2), bars(2), 80 + 7, 108, "vib")
         self.lead.add(t + bars(4), bars(2), 80 + 3, 106, "vib")
