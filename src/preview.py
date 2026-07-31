@@ -32,9 +32,12 @@ def cheap_amp(x):
         y = dsp.hpf(y, 60, order=1)
     y = Pedalboard([PeakFilter(2200, 2.5, 0.8)])(y.astype(np.float32), SR)
     y = dsp.lpf(y, 9500, order=2)
-    ir = dsp.load(IR_57) * dsp.db(-2.5) 
-    ir2 = dsp.load(IR_421)
-    y = dsp.convolve_ir(y, ir) + dsp.convolve_ir(y, ir2) * dsp.db(-4.0)
+    from scipy.signal import fftconvolve
+    ir = np.mean(dsp.load(IR_57), axis=0) * dsp.db(-2.5)
+    ir2 = np.mean(dsp.load(IR_421), axis=0)
+    m = y[0]
+    y = (fftconvolve(m, ir)[None, :len(m)]
+         + fftconvolve(m, ir2)[None, :len(m)] * dsp.db(-4.0))
     return y * dsp.db(-dsp.peak_db(y) - 6.0)
 
 
