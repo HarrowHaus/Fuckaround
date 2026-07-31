@@ -28,6 +28,7 @@ import songmod
 STEMS = os.path.join(REPO, "stems", songmod.title())
 MIX = os.path.join(REPO, "mix")
 MASTER_NAME = songmod.title() + "_master"
+PROFILE = getattr(songmod.get_song(), "MIX_PROFILE", "deathcore")
 
 
 def fx(board, x):
@@ -154,11 +155,27 @@ def build_drums(rides=None):
         cyms = dsp.ride(cyms, rides["cym"])
 
     shells = kick * db(0.0) + snare_out * db(0.0) + toms * db(-2.0)
-    smash = fx(Pedalboard([
-        Compressor(threshold_db=-34, ratio=12, attack_ms=1.0, release_ms=50),
-        LowShelfFilter(90, 2.0), HighShelfFilter(8000, 2.0),
-    ]), shells)
-    smash = smash * db(-8.0) + room * db(-2.0)
+    if PROFILE == "techdeath":
+        # Otero triple parallel: all slow attack / fast release
+        compex = fx(Pedalboard([Compressor(threshold_db=-28, ratio=8,
+                                           attack_ms=25, release_ms=60)]),
+                    snare_out * db(3.0) + toms + cyms * db(-4.0))
+        decomp = fx(Pedalboard([HighpassFilter(60),
+                                Compressor(threshold_db=-24, ratio=10,
+                                           attack_ms=20, release_ms=80)]),
+                    kick + snare_out)
+        squash = fx(Pedalboard([Compressor(threshold_db=-38, ratio=20,
+                                           attack_ms=30, release_ms=50)]),
+                    snare_out)
+        smash = (compex * db(-10.0) + decomp * db(-12.0)
+                 + squash * db(-15.0))
+    else:
+        smash = fx(Pedalboard([
+            Compressor(threshold_db=-34, ratio=12, attack_ms=1.0,
+                       release_ms=50),
+            LowShelfFilter(90, 2.0), HighShelfFilter(8000, 2.0),
+        ]), shells)
+        smash = smash * db(-8.0) + room * db(-2.0)
     if "smash" in rides:
         smash = dsp.ride(smash, rides["smash"])
     drums = shells + cyms * db(-6.0) + smash
@@ -175,12 +192,22 @@ def build_drums(rides=None):
 def build_guitars(gtr_ride=None):
     l = stem("gtr_l"); r = stem("gtr_r")
     n = max(l.shape[1], r.shape[1])
-    post = Pedalboard([
-        HighpassFilter(90), LowpassFilter(10000),
-        PeakFilter(400, -3.0, 1.2),
-        PeakFilter(4000, -4.0, 6.0),
-        PeakFilter(2800, -1.5, 1.5),       # vocal pocket prep
-    ])
+    if PROFILE == "techdeath":
+        # Otero voicing: articulation over weight — the 200 Hz pocket is
+        # surrendered to bass, top capped at 8k for cymbal identity
+        post = Pedalboard([
+            HighpassFilter(100), LowpassFilter(8000),
+            PeakFilter(200, -8.0, 0.9),
+            PeakFilter(4000, -3.0, 6.0),
+            PeakFilter(2800, -1.0, 1.5),
+        ])
+    else:
+        post = Pedalboard([
+            HighpassFilter(90), LowpassFilter(10000),
+            PeakFilter(400, -3.0, 1.2),
+            PeakFilter(4000, -4.0, 6.0),
+            PeakFilter(2800, -1.5, 1.5),       # vocal pocket prep
+        ])
     l = fx(post, dsp.pad_to(l, n)); r = fx(post, dsp.pad_to(r, n))
     # chug bloom controlled DYNAMICALLY — only compresses 100-230 Hz when a
     # chug actually blooms, instead of a permanent EQ hole
