@@ -35,6 +35,11 @@ STEMS = os.path.join(REPO, "stems", songmod.title())
 SFIZZ = os.path.join(TOOLS, "sfizz/build/library/bin/sfizz_render")
 GTX = os.path.join(SAMPLES, "UI_METAL-GTX/Programs/01-METAL-GTX Full.sfz")
 BASS_SFZ = os.path.join(SAMPLES, "bnb/Programs/03-babyblue_all.sfz")
+# songs can pick a different bass program (e.g. "01-darkblack_keysw.sfz"
+# for keyswitched lead bass) via a BASS_PROGRAM module attribute
+_bp = getattr(songmod.get_song(), "BASS_PROGRAM", None)
+if _bp:
+    BASS_SFZ = os.path.join(SAMPLES, "bnb/Programs", _bp)
 KIT_DIR = os.path.join(SAMPLES, "aasimonster")
 
 NAM_5150 = os.path.join(TOOLS, "NAM_models/Helga B 5150 BlockLetter - Boosted.nam")
@@ -50,7 +55,25 @@ SSO_DIR = os.path.join(SAMPLES, "sso/Sonatina Symphonic Orchestra")
 
 # METAL-GTX keyswitches (SFZ c-1 = 0)
 KS = dict(pm=22, pmx=20, sus=19, hammer=26, pull=25, slide_in=27, legato=29,
-          pinch=10, nat_harm=9, fall=5, dive=110)   # dive = Sus_PBR24
+          pinch=10, nat_harm=9, fall=5, dive=110,   # dive = Sus_PBR24
+          trill_ht=111, trill_wt=112, trill_m3=113, trill_M3=114,
+          bend_ht=103, bend_wh=104, ubend=106,      # unison bend (auto)
+          rake=13, scratch=8, fretmute=16, porta=108, slide_out=28)
+
+# tag -> keyswitch priority for guitar articulation resolution
+KS_PRIORITY = (("dive", "dive"), ("trill_ht", "trill_ht"),
+               ("trill_wt", "trill_wt"), ("trill_m3", "trill_m3"),
+               ("trill_M3", "trill_M3"), ("bend_ht", "bend_ht"),
+               ("bend_wh", "bend_wh"), ("ubend", "ubend"),
+               ("nat_harm", "nat_harm"), ("pinch", "pinch"),
+               ("rake", "rake"), ("scratch", "scratch"),
+               ("fretmute", "fretmute"), ("porta", "porta"),
+               ("slide_out", "slide_out"), ("fall", "fall"),
+               ("slide", "slide_in"), ("legato", "legato"),
+               ("pmx", "pmx"), ("pm", "pm"))
+
+# darkblack lead bass (01-darkblack_keysw.sfz) keyswitches
+BASS_KS = dict(bsus=27, bbtb=28, bstac=29, bghost=30, bpluck=31)
 
 
 def guitar_keyswitches(notes):
@@ -64,9 +87,7 @@ def guitar_keyswitches(notes):
     prev_end = -10.0
     for n in notes:
         want = None
-        for tag, name in (("dive", "dive"), ("pinch", "pinch"),
-                          ("fall", "fall"), ("slide", "slide_in"),
-                          ("pmx", "pmx"), ("pm", "pm")):
+        for tag, name in KS_PRIORITY:
             if tag in n.tags:
                 want = name
                 break
@@ -154,9 +175,20 @@ def write_all_midis():
     write_guitar_midi(score, "lead", f"{MIDI_DIR}/lead.mid")
     write_guitar_midi(score, "clean", f"{MIDI_DIR}/clean.mid")
     # bass lib maps at written pitch (verified: key 44 sounds G#1 52 Hz),
-    # so transpose +12 to sound in unison with the guitars' low register
+    # so transpose +12 to sound in unison with the guitars' low register.
+    # Lead-bass songs (darkblack_keysw) get articulation keyswitches too.
+    bass_ks = []
+    if getattr(songmod.get_song(), "BASS_PROGRAM", None):
+        cur = None
+        for n in sorted(score.tracks["bass"].notes, key=lambda x: x.start):
+            want = next((BASS_KS[t] for t in
+                         ("bstac", "bghost", "bpluck", "bbtb", "bsus")
+                         if t in n.tags), BASS_KS["bsus"])
+            if want != cur:
+                bass_ks.append((max(0.0, n.start - 0.06), 0.04, want, 100))
+                cur = want
     write_track_midi(score, score.tracks["bass"], f"{MIDI_DIR}/bass.mid",
-                     pitch_of=lambda n: n.pitch + 12)
+                     pitch_of=lambda n: n.pitch + 12, extra_notes=bass_ks)
     write_drum_midi(score, f"{MIDI_DIR}/drums.mid",
                     os.path.join(KIT_DIR, "midimap.xml"))
     for name in ("strings", "strings_stac", "choir"):
