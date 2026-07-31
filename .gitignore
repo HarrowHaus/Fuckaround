@@ -7,3 +7,4 @@ stems/
 __pycache__/
 # raw WAV masters exceed GitHub limits — FLAC + MP3 are committed instead
 mix/*.wav
+mix/preview.*
