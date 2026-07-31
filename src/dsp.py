@@ -62,6 +62,26 @@ def rms_db(x):
     return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-12)
 
 
+def active_rms_db(x, gate_db=-60.0):
+    """RMS over active regions only (100 ms blocks above the gate), so sparse
+    stems aren't penalized by their silence when normalizing."""
+    m = np.mean(np.atleast_2d(x) ** 2, axis=0)
+    blk = int(0.1 * SR)
+    nb = len(m) // blk
+    if nb == 0:
+        return rms_db(x)
+    b = m[:nb * blk].reshape(nb, blk).mean(axis=1)
+    keep = b > (10 ** (gate_db / 10.0))
+    if not np.any(keep):
+        return rms_db(x)
+    return 10 * np.log10(b[keep].mean() + 1e-24)
+
+
+def norm_active(x, target_db):
+    """Scale so active RMS hits target_db."""
+    return x * db(target_db - active_rms_db(x))
+
+
 # ------------------------------------------------------------------ filters
 
 def butter_split(x, freq, sr=SR, order=4):
@@ -91,18 +111,25 @@ def mono_below(x, freq, sr=SR):
 
 # ------------------------------------------------------------ dynamics
 
-def envelope(x, sr=SR, attack_ms=5.0, release_ms=60.0):
-    """Peak envelope follower (mono reduction of the key signal)."""
+def envelope(x, sr=SR, attack_ms=5.0, release_ms=60.0, decim=8):
+    """Peak envelope follower (mono reduction of the key signal).
+    Runs at sr/decim via block-max decimation for speed; ducking control
+    signals don't need full-rate resolution."""
     key = np.max(np.abs(np.atleast_2d(x)), axis=0)
-    a_a = np.exp(-1.0 / (sr * attack_ms / 1000.0))
-    a_r = np.exp(-1.0 / (sr * release_ms / 1000.0))
-    env = np.empty_like(key)
+    n = len(key)
+    pad = (-n) % decim
+    kd = np.pad(key, (0, pad)).reshape(-1, decim).max(axis=1)
+    esr = sr / decim
+    a_a = np.exp(-1.0 / (esr * attack_ms / 1000.0))
+    a_r = np.exp(-1.0 / (esr * release_ms / 1000.0))
+    env = np.empty_like(kd)
     e = 0.0
-    for i, v in enumerate(key):
+    for i in range(len(kd)):
+        v = kd[i]
         coef = a_a if v > e else a_r
         e = coef * e + (1 - coef) * v
         env[i] = e
-    return env
+    return np.repeat(env, decim)[:n]
 
 
 def sc_duck(target, key, amount_db=3.0, thresh_db=-30.0,

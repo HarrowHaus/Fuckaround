@@ -25,8 +25,11 @@ def write_track_midi(score, track, path, pitch_of=None, vel_of=None,
     (drum name -> note number, keyswitch injection, etc.).
     extra_notes: additional (start_beat, dur, pitch, vel) tuples to merge
     (used for keyswitches).
-    absolute_seconds: DrumGizmo ignores set_tempo and plays quarter=1s, so
-    for it we bake the tempo map in by writing tick = seconds * TPB.
+    absolute_seconds: DrumGizmo's midifile engine plays files at exactly half
+    the spec tempo (calibrated empirically: 60 bpm renders 2.00 s/beat,
+    120 bpm renders 1.00 s/beat). So for DrumGizmo we bake the tempo map in
+    as tick = seconds * TPB and declare 120 bpm, which renders 1 written
+    second per real second.
     """
     if absolute_seconds:
         def t2t(beat):
@@ -36,7 +39,7 @@ def write_track_midi(score, track, path, pitch_of=None, vel_of=None,
             return beat * TPB
     events = []  # (tick, order, msg)
     if absolute_seconds:
-        events.append((0, 0, MetaMessage("set_tempo", tempo=1_000_000, time=0)))
+        events.append((0, 0, MetaMessage("set_tempo", tempo=500_000, time=0)))
     else:
         for tick, kind, val in _tempo_events(score):
             events.append((tick, 0, MetaMessage("set_tempo", tempo=val, time=0)))

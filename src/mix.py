@@ -253,25 +253,44 @@ def main():
     subs = stem("subdrops")
     fxs = stem("fx")
 
+    # normalize each bus to a common active-RMS reference so the static gain
+    # structure below is meaningful regardless of amp-capture output levels
+    drums = dsp.norm_active(drums, -14.0)
+    guitars = dsp.norm_active(guitars, -14.0)
+    bass = dsp.norm_active(bass, -14.0)
+    if lead is not None:
+        lead = dsp.norm_active(lead, -16.0)
+    if clean is not None:
+        clean = dsp.norm_active(clean, -18.0)
+    for k in list(orch):
+        orch[k] = dsp.norm_active(orch[k], -18.0)
+    if subs is not None:
+        subs = subs * dsp.db(-6.0 - dsp.peak_db(subs))
+    if fxs is not None:
+        fxs = fxs * dsp.db(-6.0 - dsp.peak_db(fxs))
+
     if subs is not None:
         subs = dsp.mono_below(subs, 300)
         subs = fx(Pedalboard([Limiter(threshold_db=-6), LowpassFilter(160)]),
                   subs)
 
     # --------- static gain structure (drums forward, per research)
-    stems_gains = [(drums, 0.0), (guitars, -5.0), (bass, -7.0)]
+    # relative gains on top of the normalized buses (research level map:
+    # drums forward, guitars the wall just under them, bass -3..-6 under
+    # guitars, symphonics -6..-10 under guitars, leads ride above the wall)
+    stems_gains = [(drums, 0.0), (guitars, -2.5), (bass, -5.5)]
     if lead is not None:
-        stems_gains.append((lead, -7.5))
+        stems_gains.append((lead, 1.0))
     if clean is not None:
-        stems_gains.append((clean, -10.0))
-    for nm, g in (("strings", -13.0), ("strings_stac", -12.0),
-                  ("choir", -13.5)):
+        stems_gains.append((clean, -2.0))
+    for nm, g in (("strings", -5.0), ("strings_stac", -4.0),
+                  ("choir", -6.0)):
         if nm in orch:
             stems_gains.append((orch[nm], g))
     if subs is not None:
-        stems_gains.append((subs, -6.5))
+        stems_gains.append((subs, -2.0))
     if fxs is not None:
-        stems_gains.append((fxs, -14.0))
+        stems_gains.append((fxs, -6.0))
 
     mixbus = dsp.mix_stems(stems_gains)
 

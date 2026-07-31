@@ -124,8 +124,12 @@ def write_drum_midi(score, path, midimap_path):
         if name in mapping:
             return mapping[name]
         return None
-    write_track_midi(score, tr, path, pitch_of=pitch_of, chan=9,
-                     absolute_seconds=True)
+    # spec-correct file for DAW use
+    write_track_midi(score, tr, path, pitch_of=pitch_of, chan=9)
+    kick_alt[0] = 0
+    # DrumGizmo-calibrated file (its midifile engine runs at half tempo)
+    write_track_midi(score, tr, path.replace(".mid", "_dg.mid"),
+                     pitch_of=pitch_of, chan=9, absolute_seconds=True)
 
 
 def write_all_midis():
@@ -167,7 +171,7 @@ def render_drums():
     out_prefix = os.path.join(STEMS, "drums", "dg")
     os.makedirs(os.path.dirname(out_prefix), exist_ok=True)
     run(["drumgizmo", "-i", "midifile",
-         "-I", f"file={MIDI_DIR}/drums.mid,midimap={KIT_DIR}/midimap.xml",
+         "-I", f"file={MIDI_DIR}/drums_dg.mid,midimap={KIT_DIR}/midimap.xml",
          "-o", "wavfile", "-O", f"file={out_prefix},srate={SR}",
          kit_xml])
 
