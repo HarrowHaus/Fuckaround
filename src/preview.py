@@ -23,14 +23,15 @@ STEMS = os.path.join(REPO, "stems", "preview")
 def cheap_amp(x):
     """Static high-gain stand-in: tighten lows, 3 asymmetric clip stages,
     presence tilt, then the same real V30 IR blend as the full chain."""
+    from pedalboard import Pedalboard, PeakFilter
     y = np.mean(x, axis=0, keepdims=True)
-    y = dsp.highpass(y, 110, order=2)          # tubescreamer-ish tighten
-    y = dsp.peaking(y, 800, +4.0, 0.9)
+    y = dsp.hpf(y, 110, order=2)               # tubescreamer-ish tighten
+    y = Pedalboard([PeakFilter(800, 4.0, 0.9)])(y.astype(np.float32), SR)
     for gain, bias in ((28.0, 0.06), (14.0, -0.04), (6.0, 0.02)):
         y = np.tanh(y * gain + bias)
-        y = dsp.highpass(y, 60, order=1)
-    y = dsp.peaking(y, 2200, +2.5, 0.8)
-    y = dsp.lowpass(y, 9500, order=2)
+        y = dsp.hpf(y, 60, order=1)
+    y = Pedalboard([PeakFilter(2200, 2.5, 0.8)])(y.astype(np.float32), SR)
+    y = dsp.lpf(y, 9500, order=2)
     ir = dsp.load(IR_57) * dsp.db(-2.5) 
     ir2 = dsp.load(IR_421)
     y = dsp.convolve_ir(y, ir) + dsp.convolve_ir(y, ir2) * dsp.db(-4.0)
