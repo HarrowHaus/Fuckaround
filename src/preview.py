@@ -15,7 +15,7 @@ import dsp
 from dsp import SR
 from render import (REPO, MIDI_DIR, KIT_DIR, write_all_midis,
                     render_sfz, GTX, BASS_SFZ, IR_57, IR_421)
-from song import build_song
+from songmod import build_song
 
 STEMS = os.path.join(REPO, "stems", "preview")
 
@@ -95,7 +95,7 @@ def main():
     wall = np.zeros((2, n))
     wall[0, :min(n, L.shape[1])] = L[0, :min(n, L.shape[1])]
     wall[1, :min(n, R.shape[1])] = R[0, :min(n, R.shape[1])]
-    wall = dsp.norm_active(dsp.highpass(wall, 90), -14.0)
+    wall = dsp.norm_active(dsp.hpf(wall, 90), -14.0)
     bass = dsp.norm_active(pad(B), -14.0)
 
     mix = drums + wall * dsp.db(-2.0) + bass * dsp.db(-6.0)

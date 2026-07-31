@@ -26,6 +26,8 @@ from pedalboard import (Pedalboard, Compressor, HighpassFilter, LowpassFilter,
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STEMS = os.path.join(REPO, "stems")
 MIX = os.path.join(REPO, "mix")
+import songmod
+MASTER_NAME = songmod.title() + "_master"
 
 
 def fx(board, x):
@@ -329,7 +331,7 @@ def main():
     if tp > -1.0:
         m = m * db(-1.0 - tp)
 
-    dsp.save(os.path.join(MIX, "where_light_comes_to_die_master.wav"), m)
+    dsp.save(os.path.join(MIX, MASTER_NAME + ".wav"), m)
 
     report = {
         "master_lufs_integrated": round(dsp.lufs(m), 2),
@@ -345,9 +347,9 @@ def main():
     # 320 kbps MP3 of the master for easy listening
     import subprocess
     subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
-                    "-i", os.path.join(MIX, "where_light_comes_to_die_master.wav"),
+                    "-i", os.path.join(MIX, MASTER_NAME + ".wav"),
                     "-codec:a", "libmp3lame", "-b:a", "320k",
-                    os.path.join(MIX, "where_light_comes_to_die_master.mp3")],
+                    os.path.join(MIX, MASTER_NAME + ".mp3")],
                    check=True)
     print("mp3 written")
 

@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
-from song import build_song
+from songmod import build_song
 from midi_out import write_track_midi
 from score import Note
 import dsp

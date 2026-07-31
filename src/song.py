@@ -725,3 +725,4 @@ def build_song():
     song = Song()
     score = song.build()
     return score, song.sec
+TITLE = "where_light_comes_to_die"

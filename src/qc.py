@@ -23,7 +23,8 @@ def band_db(x, lo, hi):
 
 
 def main():
-    x = dsp.load(os.path.join(REPO, "mix", "where_light_comes_to_die_master.wav"))
+    import songmod
+    x = dsp.load(os.path.join(REPO, "mix", songmod.title() + "_master.wav"))
     n = x.shape[1]
     out = {}
     out["lufs_integrated"] = round(dsp.lufs(x), 2)
@@ -53,7 +54,7 @@ def main():
     # section dynamics: short-term LUFS at landmarks
     import pyloudnorm as pyln
     meter = pyln.Meter(SR)
-    from song import build_song
+    from songmod import build_song
     score, sec = build_song()
     marks = {name: score.beats_to_seconds(beat) + 2.0
              for name, beat in sec.items()}
