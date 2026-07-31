@@ -1,20 +1,24 @@
-"""WHERE LIGHT COMES TO DIE — blackened symphonic deathcore, 2026 blueprint.
+"""WHERE LIGHT COMES TO DIE (v2) — blackened symphonic deathcore.
 
-Key: G# minor (root = open drop string, Drop G# 7-string convention).
-Tempo map: 130 BPM core (blasts feel ~260), final breakdown drops to 100 BPM
-AND detunes a whole step to F# (the Whitechapel 'Hymns in Dissonance' move).
+v2: the riffs actually riff. A 16th-grid riff DSL drives guitars+bass+kick
+together; riffs use slides, pinch harmonics, chromatic turnarounds, 32nd
+doubles, triplet bars, stop-time, whammy dives (real 24-semi pitch bend
+samples), and a false-ending double tempo-drop final breakdown.
+
+Key: G# minor (root = open drop string, Drop G# 7-string).
+Tempo map: 130 core -> 100 final breakdown -> 88 for the re-drop.
 
 Structure (bars, 4/4):
-  intro          12  choir/strings state the leitmotif, drums enter late
-  blast_a        16  blackened tremolo, i-bVI-bII-V, traditional blast
-  verse1         16  Phrygian pedal riff 3+3+3+3+2+2, double kick
-  breakdown1      8  half-time bounce, sub drop
-  peak           24  hammer blast + leitmotif lead (harmonized), then tease
-  verse2          8  slam groove, tritone stabs, b9 cluster rings
-  bridge          8  ambient breath: clean arps, strings, riser
-  solo            8  harmonic minor / diminished neoclassical lead
-  callout         2  unison stab into silence (vocal callout space)
-  final_bd       20  100 BPM, detuned to F#, escalating 4-bar layers
+  intro          12  choir/strings leitmotif, band creeps in
+  blast_a        16  blackened moving tremolo line, harmonized 2nd half
+  verse1         16  the riff: chugs/slide-stabs/pinch/chromatic turnaround
+  breakdown1      8  displaced grids -> triplet bars -> dive -> stop-time
+  peak           24  hammer blast + leitmotif lead, bounce-grid tease
+  verse2          8  slam: slide-in chords, pinch screams, gallop bursts
+  bridge          8  clean arps + strings breath, riser
+  solo            8  neoclassical lead over pedal chugs
+  callout         2  unison stab into silence
+  final_bd       20  100 BPM 8 bars -> FALSE ENDING -> 88 BPM re-drop
   outro           8  strings restate motif over ring-out
 """
 
@@ -22,28 +26,26 @@ from score import Score, Note, humanize, vel_ladder
 import random
 
 # ------------------------------------------------------------------ constants
-ROOT = 32          # G#1, open 7th string in Drop G#
-BASS_ROOT = 20     # G#0
+ROOT = 32          # G#1
+BASS_ROOT = 20
 BPM_CORE = 130.0
 BPM_FINAL = 100.0
+BPM_REDROP = 88.0
 
 NAT_MINOR = [0, 2, 3, 5, 7, 8, 10]
 HARM_MINOR = [0, 2, 3, 5, 7, 8, 11]
 PHRYGIAN = [0, 1, 3, 5, 7, 8, 10]
 PHRYG_DOM = [0, 1, 4, 5, 7, 8, 10]
 
-# chord cycle of the song: i - bVI - bII - V  (G#m - E - A - D#)
-CYCLE = [0, 8, 1, 7]
+CYCLE = [0, 8, 1, 7]                     # i - bVI - bII - V
 CYCLE_QUAL = ["min", "maj", "maj", "maj"]
 
-# Leitmotif: degrees over 4 bars — the b2 in bar 3 is the blackened hook.
-# (offset_semitones, duration_beats)
 MOTIF = [(0, 2), (3, 1), (7, 1),
          (8, 2), (7, 1), (3, 1),
          (1, 2), (3, 1), (0, 1),
          (-1, 2), (0, 2)]
 
-BAR = 4.0  # beats
+BAR = 4.0
 
 
 def bars(n):
@@ -55,7 +57,6 @@ class Song:
         self.s = Score()
         self.s.tempo_map = []
         self.s.set_tempo(0.0, BPM_CORE)
-        # section start beats
         lengths = dict(intro=12, blast_a=16, verse1=16, breakdown1=8,
                        peak=24, verse2=8, bridge=8, solo=8, callout=2,
                        final_bd=20, outro=8)
@@ -66,46 +67,92 @@ class Song:
             pos += bars(ln)
         self.total_beats = pos
         self.s.set_tempo(self.sec["final_bd"], BPM_FINAL)
+        # the re-drop: even slower after the false ending
+        self.s.set_tempo(self.sec["final_bd"] + bars(9), BPM_REDROP)
 
-        self.gtr_l = self.s.track("gtr_l")
-        self.gtr_r = self.s.track("gtr_r")
-        self.lead = self.s.track("lead")
-        self.clean = self.s.track("clean")
-        self.bass = self.s.track("bass")
+        for nm in ("gtr_l", "gtr_r", "lead", "clean", "bass", "drums",
+                   "strings", "strings_stac", "choir", "subdrop", "fx"):
+            setattr(self, nm if nm != "subdrop" else "sub", self.s.track(nm))
         self.drums = self.s.track("drums")
-        self.strings = self.s.track("strings")
-        self.strings_stac = self.s.track("strings_stac")
-        self.choir = self.s.track("choir")
-        self.sub = self.s.track("subdrop")
-        self.fx = self.s.track("fx")
 
     # ------------------------------------------------------------- helpers
-    def drum(self, t, name, vel, dur=0.25):
-        self.drums.notes.append(Note(t, dur, 0, vel, frozenset({name})))
+    def drum(self, t, name, vel, dur=0.25, grid=False):
+        tags = {name, "grid"} if grid else {name}
+        self.drums.notes.append(Note(t, dur, 0, vel, frozenset(tags)))
 
-    def chug(self, t, dur, pitch, vel, both=True):
-        """Palm-muted chug on both rhythm guitars + bass lock."""
-        for tr in (self.gtr_l, self.gtr_r):
-            tr.add(t, dur * 0.55, pitch, vel, "pm")
-        self.bass.add(t, dur * 0.6, pitch, min(127, vel + 5), "pm")
+    def gtr(self, t, dur, pitch, vel, *tags, track=None):
+        for tr in ([self.gtr_l, self.gtr_r] if track is None else [track]):
+            tr.add(t, dur, pitch, vel, *tags)
 
-    def ring(self, t, dur, pitches, vel):
-        """Open ringing chord on both guitars + bass root."""
-        for tr in (self.gtr_l, self.gtr_r):
-            for p in pitches:
-                tr.add(t, dur, p, vel, "sus")
-        self.bass.add(t, dur, pitches[0], vel, "sus")
+    def bassn(self, t, dur, pitch, vel, *tags):
+        self.bass.add(t, dur, max(28, pitch), min(127, vel), *tags)
 
-    def trem(self, tr, t0, nbars, pitch_fn, vel_base=96):
-        """Tremolo-picked 16ths; alternating velocities simulate down/up."""
-        n16 = int(nbars * 16)
-        for i in range(n16):
-            t = t0 + i * 0.25
-            v = vel_base + (0 if i % 2 == 0 else -14) + [0, -4, -2, -6][i % 4]
-            tr.add(t, 0.24, pitch_fn(i), max(40, v), "trem")
+    # ------------------------------------------------- the riff DSL
+    # one char per 16th slot (or per triplet slot when triplet=True):
+    #   .  rest              c  chug (pm)          C  accent chug (pmx, hard)
+    #   d  32nd double chug  x  choked dead chug   2  b2 stab   5  b5 stab
+    #   3  b3 slide-stab     6  b6 stab            7  b7 stab   o  octave stab
+    #   9  b9 dyad ring      p  pinch harmonic     f  slide-down fall
+    #   D  dive (whammy, held; PB written by renderer)   r  low b2 chug
+    def riff(self, t0, rows, root=None, kick=True, kick_snare_beat=None,
+             vel=104, triplet_rows=()):
+        root = ROOT if root is None else root
+        stab = {"2": 1, "3": 3, "5": 6, "6": 8, "7": 10, "o": 12}
+        for b, row in enumerate(rows):
+            trip = b in triplet_rows
+            slots = 12 if trip else 16
+            sdur = (1.0 / 3.0) if trip else 0.25
+            assert len(row) == slots, f"row {b} len {len(row)} != {slots}"
+            for i, ch in enumerate(row):
+                if ch == ".":
+                    continue
+                t = t0 + b * BAR + i * sdur
+                if ch == "c":
+                    self.gtr(t, sdur * 0.5, root, vel, "pm")
+                    self.bassn(t, sdur * 0.55, root, vel + 6, "pm")
+                elif ch == "C":
+                    self.gtr(t, sdur * 0.5, root, vel + 10, "pmx")
+                    self.bassn(t, sdur * 0.55, root, vel + 12, "pm")
+                elif ch == "d":
+                    for k in (0, 1):
+                        self.gtr(t + k * sdur / 2, sdur * 0.3, root,
+                                 vel + 4 - 6 * k, "pmx")
+                        self.bassn(t + k * sdur / 2, sdur * 0.3, root,
+                                   vel + 8 - 6 * k, "pm")
+                        if kick:
+                            self.drum(t + k * sdur / 2, "kick", 116 - 6 * k,
+                                      dur=0.12, grid=True)
+                elif ch == "x":
+                    self.gtr(t, sdur * 0.22, root, vel - 14, "pmx")
+                    self.bassn(t, sdur * 0.25, root, vel - 8, "pm")
+                elif ch == "r":
+                    self.gtr(t, sdur * 0.5, root + 1, vel + 6, "pmx")
+                    self.bassn(t, sdur * 0.55, root + 1, vel + 10, "pm")
+                elif ch in stab:
+                    p = root + stab[ch]
+                    tags = ("slide", "sus") if ch in ("3", "o") else ("sus",)
+                    self.gtr(t, sdur * 1.6, p, vel + 12, *tags)
+                    self.bassn(t, sdur * 1.4, p, vel + 10, "pick")
+                elif ch == "9":
+                    for tr in (self.gtr_l, self.gtr_r):
+                        tr.add(t, BAR * 0.9, root, vel + 12, "sus")
+                        tr.add(t, BAR * 0.9, root + 13, vel + 8, "sus")
+                    self.bassn(t, BAR * 0.9, root, vel + 10, "sus")
+                elif ch == "p":
+                    self.gtr(t, sdur * 2.5, root + 24, 122, "pinch")
+                    self.bassn(t, sdur * 0.55, root, vel + 4, "pm")
+                elif ch == "f":
+                    self.gtr(t, sdur * 2.0, root + 3, vel, "fall")
+                elif ch == "D":
+                    self.gtr(t, BAR * 0.95, root, 120, "dive", "sus")
+                    self.bassn(t, BAR * 0.9, root, 116, "sus")
+                if kick and ch in "cCr23567o9D":
+                    self.drum(t, "kick", 118, dur=0.18, grid=True)
+            if kick_snare_beat is not None:
+                self.drum(t0 + b * BAR + kick_snare_beat, "snare", 123)
 
+    # ------------------------------------------------------ drum patterns
     def blast_traditional(self, t0, nbars, cym="ride_bell", vel_s=108):
-        """Kick on 16th offbeats, snare on 8ths, cymbal with snare."""
         for i in range(int(nbars * 8)):
             t = t0 + i * 0.5
             self.drum(t, "snare", vel_ladder(vel_s, i, (0, -8, -3, -10)))
@@ -113,18 +160,24 @@ class Song:
             self.drum(t, cym, 88 if i % 2 else 96)
 
     def blast_hammer(self, t0, nbars, cym="china", vel=110):
-        """Kick+snare unison 8ths, cymbal unison — the wall."""
         for i in range(int(nbars * 8)):
             t = t0 + i * 0.5
             self.drum(t, "kick", vel_ladder(vel, i))
             self.drum(t, "snare", vel_ladder(vel - 2, i, (0, -6, -2, -8)))
             self.drum(t, cym, 84 if i % 2 else 92)
 
-    def dkick16(self, t0, nbars, snare_beats=(1.0, 3.0), cym="ride_bell"):
-        """Double-kick 16ths groove with backbeat snare."""
+    def blast_bomb(self, t0, nbars, cym="china", vel=112):
+        """K+S unison 16ths — maximum density, for escalations."""
         for i in range(int(nbars * 16)):
             t = t0 + i * 0.25
-            self.drum(t, "kick", vel_ladder(108, i))
+            self.drum(t, "kick", vel_ladder(vel, i))
+            self.drum(t, "snare", vel_ladder(vel - 4, i, (0, -7, -3, -9)))
+            if i % 2 == 0:
+                self.drum(t, cym, 86 if i % 4 else 94)
+
+    def dkick16(self, t0, nbars, snare_beats=(1.0, 3.0), cym="ride_bell"):
+        for i in range(int(nbars * 16)):
+            self.drum(t0 + i * 0.25, "kick", vel_ladder(108, i))
         for b in range(int(nbars)):
             for sb in snare_beats:
                 self.drum(t0 + b * BAR + sb, "snare", random.randint(114, 122))
@@ -133,21 +186,37 @@ class Song:
                 self.drum(t0 + b * BAR + q, cym, 84)
 
     def fill_snare_burst(self, t0):
-        """32nd snare burst crescendo on beat 4 into a downbeat."""
         for i in range(8):
             self.drum(t0 + i * 0.125, "snare", 70 + i * 7)
 
     def fill_cascade(self, t0):
-        """One-beat-per-drum 16th cascade: snare -> tom1 -> tom2 -> floor."""
         for j, d in enumerate(["snare", "tom1", "tom2", "tom_floor"]):
             for i in range(4):
                 self.drum(t0 + j * 1.0 + i * 0.25, d, 100 + (i == 0) * 12)
+
+    def fill_quads(self, t0):
+        """One beat of KKSS quads into a downbeat."""
+        for i, d in enumerate(["kick", "kick", "snare", "snare"] * 2):
+            self.drum(t0 + i * 0.125, d, 104 + (i % 4 == 2) * 10)
 
     def crash_downbeat(self, t, which="crash1", vel=112, with_kick=True):
         self.drum(t, which, vel)
         if with_kick:
             self.drum(t, "kick", 116)
 
+    def china_quarters(self, t0, nbars, every=1.0, vel=106):
+        for b in range(int(nbars)):
+            q = 0.0
+            while q < 4.0:
+                self.drum(t0 + b * BAR + q, "china",
+                          vel + (6 if q == 0 else 0))
+                q += every
+
+    def halftime_snare(self, t0, nbars, beat=2.0, vel=123):
+        for b in range(int(nbars)):
+            self.drum(t0 + b * BAR + beat, "snare", vel)
+
+    # ------------------------------------------------------ orch helpers
     def motif_notes(self, t0, base_pitch, stretch=1.0, vel=100, tags=("sus",)):
         out, t = [], t0
         for off, d in MOTIF:
@@ -157,31 +226,32 @@ class Song:
         return out
 
     def strings_chord(self, t, dur, root_off, quality, vel=84, base=56):
-        """Voiced strings pad: root, 5th, octave, 3rd on top."""
         third = 4 if quality == "maj" else 3
         root = base + root_off
         for p in (root, root + 7, root + 12, root + 12 + third):
             self.strings.add(t, dur, p, vel, "sus")
 
-    # ------------------------------------------------------------- sections
+    # ------------------------------------------------------------- build
     def build(self):
         self.intro(); self.blast_a(); self.verse1(); self.breakdown1()
         self.peak(); self.verse2(); self.bridge(); self.solo()
         self.callout(); self.final_breakdown(); self.outro()
-        # global humanization: hands loose, feet tighter, breakdowns grid-tight
         self.drums.notes = humanize(self.drums.notes, vel_jitter=5,
                                     time_jitter_beats=0.006,
                                     keep_grid=("grid",))
         for tr in (self.gtr_l, self.gtr_r):
-            tr.notes = humanize(tr.notes, vel_jitter=4,
-                                time_jitter_beats=0.004)
+            tr.notes = humanize(tr.notes, vel_jitter=5,
+                                time_jitter_beats=0.005)
+            # double-track realism: independent note-length scatter per side
+            tr.notes = [Note(n.start, n.dur * random.uniform(0.92, 1.06),
+                             n.pitch, n.vel, n.tags) for n in tr.notes]
         self.bass.notes = humanize(self.bass.notes, vel_jitter=4,
                                    time_jitter_beats=0.003)
         return self.s
 
+    # ------------------------------------------------------------ sections
     def intro(self):
         t0 = self.sec["intro"]
-        # choir pedal swells under the motif (strings state it twice)
         for rep in range(2):
             base = t0 + bars(4) * rep
             self.strings.extend(self.motif_notes(base, 68, vel=88 + rep * 8))
@@ -191,14 +261,16 @@ class Song:
                 third = 4 if q == "maj" else 3
                 for p in (56 + roff, 56 + roff + third, 56 + roff + 7):
                     self.choir.add(base + bars(i), BAR, p, 64 + rep * 12, "sus")
-        # bars 9-12: band creeps in — low trem guitar swell + tom build
+        # band creeps in: low tremolo swell + tom pulse + snare-roll riser
         t = t0 + bars(8)
-        self.trem(self.gtr_l, t, 4, lambda i: 44, vel_base=78)
-        self.trem(self.gtr_r, t, 4, lambda i: 44, vel_base=78)
+        for tr in (self.gtr_l, self.gtr_r):
+            for i in range(4 * 16):
+                v = 72 + int(i / 64 * 30) + (0 if i % 2 == 0 else -12)
+                tr.add(t + i * 0.25, 0.24, 44, v, "trem")
         self.strings.extend(self.motif_notes(t, 68, vel=104))
         for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
             self.strings_chord(t + bars(i), BAR, roff, q, vel=92, base=44)
-        for b in range(2):  # tom pulse
+        for b in range(2):
             for i in range(8):
                 self.drum(t + b * BAR + i * 0.5, "tom_floor", 78 + (i % 2) * 10)
         self.fill_cascade(t + bars(2))
@@ -209,36 +281,43 @@ class Song:
     def blast_a(self):
         t0 = self.sec["blast_a"]
         self.crash_downbeat(t0)
-        # tremolo roots of the cycle, one bar each, walking approach in bar 4
-        oct_ = 44  # G#2 register
-        cycle_p = [oct_ + o for o in CYCLE]
+        oct_ = 44
+        # moving blackened tremolo line, 16 slots/bar of scale offsets
+        line = [
+            [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 10, 10, 8, 8],
+            [0, 0, 0, 0, 3, 3, 3, 3, 1, 1, 1, 1, 0, 0, 0, 0],
+            [8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 7, 7, 8, 8, 8, 8],
+            [1, 1, 1, 1, 1, 1, 1, 1, 7, 7, 7, 7, 7, 7, 11, 11],
+        ]
 
-        def trem_pitch(i):
-            bar_i = (i // 16) % 4
-            pos = i % 16
-            if bar_i == 3 and pos >= 12:      # walk-up back to i: 5, 7 deg
-                return oct_ + [7, 7, 11, 11][pos - 12]
-            return cycle_p[bar_i]
-        for tr in (self.gtr_l, self.gtr_r):
-            self.trem(tr, t0, 16, trem_pitch, vel_base=98)
-        # bass: driving 8ths on roots
-        for i in range(16 * 8):
-            bar_i = (i // 8) % 4
-            self.bass.add(t0 + i * 0.5, 0.45, 32 + CYCLE[bar_i],
-                          102, "pick")
-        # drums: traditional blast; china for last 2 bars of each 8
+        def play_line(tstart, nbars, tr, transpose=0, vel_base=98):
+            for b in range(nbars):
+                row = line[b % 4]
+                for i in range(16):
+                    t = tstart + b * BAR + i * 0.25
+                    v = vel_base + (0 if i % 2 == 0 else -14) + [0, -4, -2, -6][i % 4]
+                    tr.add(t, 0.24, oct_ + row[i] + transpose, max(40, v),
+                           "trem")
+        play_line(t0, 8, self.gtr_l)
+        play_line(t0, 8, self.gtr_r)
+        # 2nd half: R harmonizes a 5th up — blackened harmony
+        play_line(t0 + bars(8), 8, self.gtr_l)
+        play_line(t0 + bars(8), 8, self.gtr_r, transpose=7, vel_base=94)
+        for b in range(16):
+            row = line[b % 4]
+            for i in range(8):
+                self.bassn(t0 + b * BAR + i * 0.5, 0.45,
+                           32 + row[i * 2], 102, "pick")
         self.blast_traditional(t0, 6)
         self.blast_traditional(t0 + bars(6), 2, cym="china")
         self.blast_traditional(t0 + bars(8), 6)
-        self.blast_traditional(t0 + bars(14), 2, cym="china")
-        # second half: strings baroque ostinato 8ths (root-5-b6-5 figure)
+        self.blast_bomb(t0 + bars(14), 2)          # escalate out
         t = t0 + bars(8)
         for i in range(8 * 8):
             bar_i = (i // 8) % 4
             root = 68 + CYCLE[bar_i]
             fig = [0, 7, 8, 7][i % 4]
             self.strings_stac.add(t + i * 0.5, 0.4, root + fig, 92, "stac")
-        # lead ghost of the motif floats over bars 9-16
         for n in self.motif_notes(t, 80, stretch=2.0, vel=96):
             self.lead.notes.append(n)
         self.fill_snare_burst(t0 + bars(16) - 1.0)
@@ -246,55 +325,56 @@ class Song:
     def verse1(self):
         t0 = self.sec["verse1"]
         self.crash_downbeat(t0, "china")
-        # Phrygian pedal riff: 3+3+3+3+2+2 accent grid over PM 16ths
-        accents = {0: None, 3: 45, 6: None, 9: 38, 12: None, 14: 33}
-        # slots hit on every 16th; accents replace pedal w/ dissonant stabs
-        for b in range(16):
-            for i in range(16):
-                t = t0 + b * BAR + i * 0.25
-                hit3322 = i in (0, 3, 6, 9, 12, 14)
-                if not hit3322:
-                    continue
-                acc = accents.get(i)
-                variant = (b % 4 == 3)
-                if acc and (b % 2 == 1 or variant):
-                    for tr in (self.gtr_l, self.gtr_r):
-                        tr.add(t, 0.4, acc, 112, "sus")
-                    self.bass.add(t, 0.4, 33 if acc == 45 else 38,
-                                  110, "pick")
-                else:
-                    self.chug(t, 0.5, ROOT, 100)
-        # drums: double kick 16ths, backbeat 2+4, ghost notes
+        # THE riff: 4-bar phrase (A A' A B-turnaround), played 4x with edits
+        A_ = "c.c3c.c5c.c322p."
+        A2 = "c.c3c.c5c.c366f."
+        B_ = "ccccdd3.o.7.5.3."   # turnaround: chrom-ish descent + doubles
+        B2 = "ccccdd3.76533221"   # full chromatic crawl variant
+        for rep in range(4):
+            rows = [A_, A2, A_, (B_ if rep % 2 == 0 else B2)]
+            self.riff(t0 + bars(4 * rep), rows, kick=True)
+        # groove drums: double-kick 16ths under, backbeat 2+4, ghosts
         self.dkick16(t0, 16, snare_beats=(1.0, 3.0))
         for b in range(16):
             for g in (1.75, 3.75):
                 self.drum(t0 + b * BAR + g, "snare", random.randint(42, 62))
+        self.fill_quads(t0 + bars(8) - 1.0)
         self.fill_cascade(t0 + bars(15))
         self.sub.add(self.sec["breakdown1"], 2.0, BASS_ROOT, 122)
 
     def breakdown1(self):
         t0 = self.sec["breakdown1"]
-        # grids (16th chars): research patterns; bar4 variant; 2nd half bounce
-        g_a = "X--X--X---X-X---"
-        g_a4 = "X--X--X--X--XX--"
-        bounce = "X-X-XX--X-X-XXX-"
-        rows = [g_a, g_a, g_a, g_a4, bounce, bounce, g_a, "X-X-XX--XXXX----"]
-        for b, row in enumerate(rows):
-            for i, c in enumerate(row):
-                if c != "X":
-                    continue
-                t = t0 + b * BAR + i * 0.25
-                # last accent of bars 4/8: b2 slide stab
-                if b in (3, 7) and i >= 12:
-                    self.chug(t, 0.5, ROOT + 1, 116)
-                else:
-                    self.chug(t, 0.5, ROOT, 112)
-                self.drum(t, "kick", 118, dur=0.2)
-                self.drums.notes[-1] = self.drums.notes[-1].tagged("grid")
-            # china quarters, snare on 3 (half-time)
-            for q in range(4):
-                self.drum(t0 + b * BAR + q, "china", 104 if q else 112)
-            self.drum(t0 + b * BAR + 2.0, "snare", 121)
+        # bars 1-4: displaced 16th grids w/ doubles; bar 4 ends in a DIVE
+        self.riff(t0, [
+            "C..C..C...dC.2f.",
+            "C..C..C...dC.2..",
+            "C..C..C.C..C.dd.",
+            "C..C..r.r...D...",
+        ], kick=True)
+        self.china_quarters(t0, 4)
+        self.halftime_snare(t0, 4)
+        # bars 5-6: TRIPLET bars — the lurch
+        self.riff(t0 + bars(4), [
+            "C.CC.CC..C.C",
+            "C.CC.C..CCCC",
+        ], kick=True, triplet_rows=(0, 1))
+        self.china_quarters(t0 + bars(4), 2)
+        self.halftime_snare(t0 + bars(4), 2)
+        # bar 7: bounce; bar 8: stop-time — ring, silence, 3 dry pickups
+        self.riff(t0 + bars(6), ["C.C.CC..C.C.ddd."], kick=True)
+        self.china_quarters(t0 + bars(6), 1)
+        self.halftime_snare(t0 + bars(6), 1)
+        t8 = t0 + bars(7)
+        for tr in (self.gtr_l, self.gtr_r):
+            tr.add(t8, 1.2, ROOT, 116, "sus")
+            tr.add(t8, 1.2, ROOT + 13, 110, "sus")   # b9 ring
+        self.bassn(t8, 1.2, ROOT, 114, "sus")
+        self.drum(t8, "crash1_stop", 116)
+        self.drum(t8, "kick", 122, grid=True)
+        for k, tt in enumerate((3.0, 3.25, 3.5)):    # dry pickup chugs
+            self.gtr(t8 + tt, 0.12, ROOT, 96 + k * 6, "pmx")
+            self.bassn(t8 + tt, 0.12, ROOT, 104, "pm")
+            self.drum(t8 + tt, "kick", 112, dur=0.12, grid=True)
         self.sub.add(t0, 2.0, BASS_ROOT, 124)
         self.sub.add(t0 + bars(4), 2.0, BASS_ROOT, 118)
         self.fx.add(t0 + bars(7), bars(1), 0, 100, "riser")
@@ -302,33 +382,28 @@ class Song:
     def peak(self):
         t0 = self.sec["peak"]
         self.crash_downbeat(t0)
-        # 24 bars: 8 motif lead, 8 harmonized + hammer blast, 8 half-time tease
-        # rhythm: tremolo root+5 dyads through the cycle
-        def dyad_trem(tr, t_start, nbars, det=0):
-            def pf(i):
-                return 44 + CYCLE[(i // 16) % 4] + det
-            self.trem(tr, t_start, nbars, pf, vel_base=96)
-        dyad_trem(self.gtr_l, t0, 16)
-        dyad_trem(self.gtr_r, t0, 16, det=7)   # R plays the 5th — wide wall
-        for i in range(16 * 8):
-            self.bass.add(t0 + i * 0.5, 0.45, 32 + CYCLE[(i // 8) % 4],
-                          104, "pick")
-        # lead: motif stretched (half-time feel), then harmonized a 3rd up
+        oct_ = 44
+        for b in range(16):
+            roff = CYCLE[(b // 2) % 4]
+            for i in range(16):
+                t = t0 + b * BAR + i * 0.25
+                v = 96 + (0 if i % 2 == 0 else -14) + [0, -4, -2, -6][i % 4]
+                self.gtr_l.add(t, 0.24, oct_ + roff, max(40, v), "trem")
+                self.gtr_r.add(t, 0.24, oct_ + roff + 7, max(40, v - 4), "trem")
+            for i in range(8):
+                self.bassn(t0 + b * BAR + i * 0.5, 0.45, 32 + roff, 104, "pick")
         for n in self.motif_notes(t0, 80, stretch=2.0, vel=112):
             self.lead.notes.append(n.tagged("vib"))
         for n in self.motif_notes(t0 + bars(8), 80, stretch=2.0, vel=114):
             self.lead.notes.append(n.tagged("vib"))
         for n in self.motif_notes(t0 + bars(8), 80, stretch=2.0, vel=104):
-            # diatonic third above in harmonic minor
-            deg = HARM_MINOR.index(((n.pitch - 80) % 12)
-                                   ) if ((n.pitch - 80) % 12) in HARM_MINOR else 0
+            off = (n.pitch - 80) % 12
+            deg = HARM_MINOR.index(off) if off in HARM_MINOR else 0
             up = HARM_MINOR[(deg + 2) % 7] + (12 if (deg + 2) >= 7 else 0)
-            self.lead.notes.append(Note(n.start, n.dur,
-                                        80 + up, 104, frozenset({"vib", "harm"})))
-        # drums: trad blast 8, hammer blast 8
+            self.lead.notes.append(Note(n.start, n.dur, 80 + up, 104,
+                                        frozenset({"vib", "harm"})))
         self.blast_traditional(t0, 8)
         self.blast_hammer(t0 + bars(8), 8)
-        # strings + choir carry the cycle big
         for rep in range(4):
             for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
                 t = t0 + bars(rep * 4 + i)
@@ -336,69 +411,74 @@ class Song:
                 third = 4 if q == "maj" else 3
                 for p in (68 + roff, 68 + roff + third):
                     self.choir.add(t, BAR, p, 88, "sus")
-        # bars 17-24: half-time tease — chugs + sustained lead b6->5 resolve
+        # bars 17-24: half-time tease on a bounce grid + sustained lead
         t = t0 + bars(16)
-        grid = "X--X--X-X---X---"
-        for b in range(8):
-            for i, c in enumerate(grid):
-                if c == "X":
-                    tt = t + b * BAR + i * 0.25
-                    self.chug(tt, 0.5, ROOT if b % 4 != 3 else ROOT + 1, 108)
-                    self.drum(tt, "kick", 116, dur=0.2)
-            for q in range(4):
-                self.drum(t + b * BAR + q, "china", 102)
-            self.drum(t + b * BAR + 2.0, "snare", 119)
-        self.lead.add(t, bars(2), 80 + 8, 110, "vib")          # b6
-        self.lead.add(t + bars(2), bars(2), 80 + 7, 108, "vib")  # 5
+        for rep in range(2):
+            self.riff(t + bars(4 * rep), [
+                "C.C.CC..C.C.CC..",
+                "C.C.CC..C.C.ddC.",
+                "C.C.CC..C.C.CC..",
+                "C.C.CCr.r.dd2.f." if rep else "C.C.CC..CCdd22..",
+            ], kick=True)
+        self.china_quarters(t, 8)
+        self.halftime_snare(t, 8)
+        self.lead.add(t, bars(2), 80 + 8, 110, "vib")
+        self.lead.add(t + bars(2), bars(2), 80 + 7, 108, "vib")
         self.lead.add(t + bars(4), bars(2), 80 + 3, 106, "vib")
         self.lead.add(t + bars(6), bars(1.5), 80 + 1, 110, "vib")
         self.lead.add(t + bars(7.5), bars(0.5), 80, 112, "vib")
         for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
-            self.strings_chord(t + bars(i * 2), bars(2), roff, q, vel=80, base=44)
+            self.strings_chord(t + bars(i * 2), bars(2), roff, q, vel=80,
+                               base=44)
 
     def verse2(self):
         t0 = self.sec["verse2"]
         self.crash_downbeat(t0, "china")
-        # slam groove: 8th chugs, tritone stabs, gallop bars 5-7, b9 ring 4/8
-        for b in range(8):
-            if b in (3, 7):
-                self.ring(t0 + b * BAR, bars(1), [ROOT, ROOT + 13], 114)
-                self.drum(t0 + b * BAR, "china", 114)
-                self.drum(t0 + b * BAR, "kick", 118)
-                self.fill_snare_burst(t0 + b * BAR + 3.0)
-                continue
-            if 4 <= b <= 6:   # gallop: 8th + two 16ths per beat (X-xx)
-                for beat in range(4):
-                    t = t0 + b * BAR + beat
-                    self.chug(t, 0.5, ROOT, 106)
-                    self.chug(t + 0.5, 0.25, ROOT, 96)
-                    self.chug(t + 0.75, 0.25, ROOT, 92)
-                    for kt in (0.0, 0.5, 0.75):
-                        self.drum(t + kt, "kick", 114, dur=0.15)
-            else:
-                for i in range(8):
-                    t = t0 + b * BAR + i * 0.5
-                    p = ROOT + (6 if i in (3, 6) and b % 2 else 0)  # tritone stab
-                    self.chug(t, 0.5, p, 108 if p != ROOT else 102)
-                    self.drum(t, "kick", 114, dur=0.2)
-            for q in (0.0, 1.0, 2.0, 3.0):
-                self.drum(t0 + b * BAR + q, "china", 100)
-            self.drum(t0 + b * BAR + 2.0, "snare", 120)
+        # slam: slide-in low chords, tritone answers, pinch screams
+        self.riff(t0, [
+            "3...C...5...C.p.",
+            "3...C...5...CCCC",
+            "3...C...5...C.p.",
+        ], kick=True)
+        self.china_quarters(t0, 3, every=1.0)
+        self.halftime_snare(t0, 3)
+        # bar 4: b9 ring + snare burst
+        self.riff(t0 + bars(3), ["9..............."], kick=True)
+        self.drum(t0 + bars(3), "china", 114)
+        self.fill_snare_burst(t0 + bars(3) + 3.0)
+        # bars 5-7: gallop w/ kick triplets, china quarters
+        for b in range(3):
+            for beat in range(4):
+                t = t0 + bars(4 + b) + beat
+                self.gtr(t, 0.4, ROOT, 106, "pm")
+                self.gtr(t + 0.5, 0.2, ROOT, 96, "pm")
+                self.gtr(t + 0.75, 0.2, ROOT, 92, "pm")
+                self.bassn(t, 0.45, ROOT, 112, "pm")
+                self.bassn(t + 0.5, 0.2, ROOT, 102, "pm")
+                self.bassn(t + 0.75, 0.2, ROOT, 98, "pm")
+                for kt in (0.0, 0.5, 0.75):
+                    self.drum(t + kt, "kick", 114, dur=0.15, grid=True)
+            self.china_quarters(t0 + bars(4 + b), 1)
+            self.halftime_snare(t0 + bars(4 + b), 1)
+        # bar 8: b9 ring + quads into the bridge
+        self.riff(t0 + bars(7), ["9..............."], kick=True)
+        self.drum(t0 + bars(7), "crash2", 114)
+        self.fill_quads(t0 + bars(7) + 3.0)
 
     def bridge(self):
         t0 = self.sec["bridge"]
-        # ambient breath: clean arps over strings, bass pedal, no drums
         for rep in range(2):
             for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
                 t = t0 + bars(rep * 4 + i)
                 third = 4 if q == "maj" else 3
                 arp = [56 + roff, 56 + roff + 7, 68 + roff, 68 + roff + third,
-                       68 + roff + 7, 68 + roff + third, 68 + roff, 56 + roff + 7]
+                       68 + roff + 7, 68 + roff + third, 68 + roff,
+                       56 + roff + 7]
                 for j, p in enumerate(arp):
-                    self.clean.add(t + j * 0.5, 0.9, p, 78 + (j == 0) * 10, "clean")
+                    self.clean.add(t + j * 0.5, 0.9, p, 78 + (j == 0) * 10,
+                                   "clean")
                 self.strings_chord(t, BAR, roff, q, vel=64, base=44)
-                self.bass.add(t, BAR, 32 + roff, 72, "sus")
-        # riser: strings crescendo + snare roll last 2 bars
+                self.bassn(t, BAR, 32 + roff, 72, "sus")
         self.fx.add(t0 + bars(6), bars(2), 0, 100, "riser")
         for i in range(32):
             self.drum(t0 + bars(6) + i * 0.25, "snare", 40 + int(i * 2.5))
@@ -406,115 +486,139 @@ class Song:
     def solo(self):
         t0 = self.sec["solo"]
         self.crash_downbeat(t0)
-        # rhythm bed: pedal 16th chugs; drums double-kick w/ backbeat
+        # rhythm bed: 3+3+3+3+2+2 pedal grid (more push than straight 16ths)
         for b in range(8):
-            for i in range(16):
-                if i % 4 != 3:
-                    self.chug(t0 + b * BAR + i * 0.25, 0.4, ROOT, 96)
+            for i in (0, 3, 6, 9, 12, 14):
+                t = t0 + b * BAR + i * 0.25
+                self.gtr(t, 0.4, ROOT, 96, "pm")
+                self.bassn(t, 0.45, ROOT, 104, "pm")
         self.dkick16(t0, 8, snare_beats=(1.0, 3.0), cym="crash2")
-        # neoclassical lead: harm minor ascent, dim7 descent, phryg-dom trill,
-        # climb to screaming sustained bend
         t = t0
         run = [56 + HARM_MINOR[i % 7] + 12 * (i // 7) for i in range(15)]
-        for i, p in enumerate(run):                       # bars 1-2 ascent
-            self.lead.add(t + i * 0.25, 0.24, p, 100 + (i % 4 == 0) * 12, "fast")
+        for i, p in enumerate(run):
+            self.lead.add(t + i * 0.25, 0.24, p, 100 + (i % 4 == 0) * 12,
+                          "fast")
         t += bars(2)
         dim = [80 + x for x in (0, -3, -6, -9, -12, -15, -18, -21)]
-        for i, p in enumerate(dim):                       # bars 3-4 dim7 fall
+        for i, p in enumerate(dim):
             self.lead.add(t + i * 0.5, 0.45, p, 108, "fast")
         t += bars(2)
-        for i in range(16):                               # bars 5-6 b9 trill
+        for i in range(16):
             p = 68 + (1 if i % 2 else 0)
-            self.lead.add(t + i * 0.25, 0.22, p, 96 + (i % 4 == 0) * 10, "fast")
+            self.lead.add(t + i * 0.25, 0.22, p, 96 + (i % 4 == 0) * 10,
+                          "fast")
         t += bars(2)
         climb = [68 + PHRYG_DOM[i % 7] + 12 * (i // 7) for i in range(8)]
-        for i, p in enumerate(climb):                     # bar 7 climb
+        for i, p in enumerate(climb):
             self.lead.add(t + i * 0.5, 0.45, p, 104, "fast")
-        self.lead.add(t + bars(1), bars(1), 92, 118, "vib")  # screaming G#5+12
+        self.lead.add(t + bars(1), bars(1), 92, 118, "vib")
 
     def callout(self):
         t0 = self.sec["callout"]
-        # unison stab beat 1, then silence — the vocalist owns this space
-        self.ring(t0, 1.0, [ROOT, ROOT + 12], 120)
+        for tr in (self.gtr_l, self.gtr_r):
+            tr.add(t0, 1.0, ROOT, 120, "sus")
+            tr.add(t0, 1.0, ROOT + 12, 116, "sus")
+        self.bassn(t0, 1.0, ROOT, 118, "sus")
         self.drum(t0, "china", 118)
         self.drum(t0, "kick", 122)
         self.fx.add(t0 + bars(1), bars(1), 0, 110, "riser")
-        self.sub.add(self.sec["final_bd"], 3.0, 18, 127)  # F#0 — detuned world
+        self.sub.add(self.sec["final_bd"], 3.0, 18, 127)
 
     def final_breakdown(self):
         t0 = self.sec["final_bd"]
-        R = ROOT - 2  # F#1 — the whole-step detune
-        rows = [
-            # bars 1-4: sparse quarter-time devastation
-            "X-----X---X-----", "X-----X---X-----",
-            "X-----X---X-----", "X-----X---X-X-X-",
-            # bars 5-8: displacement + 32nd doubles
-            "X--X----XX--X---", "X--X----XX--X---",
-            "X--X----XX--X---", "X--X---XX--XXX--",
-            # bars 9-12: lead enters (leitmotif over the chugs)
-            "X-X---X---X-X---", "X-X---X---X-X---",
-            "X-X---X---X-X---", "X-X---X-XXXX----",
-            # bars 13-16: escalation
-            "X-X-XX--X-X-XXX-", "X-X-XX--X-X-XXX-",
-            "XX--XX--XX--XX--", "X---X---X---X---",
-            # bars 17-20: unison quarters into the last hit
-            "X---X---X---X---", "X---X---X---X---",
-            "X---X---X---X---", "X---------------",
-        ]
-        for b, row in enumerate(rows):
-            dbl = b in (7, 11, 12, 13)
-            for i, c in enumerate(row):
-                if c != "X":
-                    continue
-                t = t0 + b * BAR + i * 0.25
-                pitch = R + (1 if (b in (3, 11) and i >= 12) else 0)
-                self.chug(t, 0.5, pitch, 116)
-                self.drum(t, "kick", 120, dur=0.2)
-                self.drums.notes[-1] = self.drums.notes[-1].tagged("grid")
-                if dbl and c == "X" and i % 4 == 0:
-                    self.drum(t + 0.125, "kick", 106, dur=0.12)
-                    self.drums.notes[-1] = self.drums.notes[-1].tagged("grid")
-            half = b < 8 or b >= 16
-            for q in ((0.0, 2.0) if half else (0.0, 1.0, 2.0, 3.0)):
-                self.drum(t0 + b * BAR + q, "china", 108 if q else 116)
-            if b % 2 == 1 and b < 16:
+        R = ROOT - 2   # F# — the detune
+        # ---- phase 1 (100 BPM, bars 1-8): displaced grids, escalating
+        self.riff(t0, [
+            "C.....C...C.....",
+            "C.....C...C..2f.",
+            "C.....C...C.....",
+            "C.....C..dd..D..",
+            "C..C....dC..C...",
+            "C..C....dC..C2..",
+            "C..C....dC..CC..",
+            "C..C..dd..dd2.f.",
+        ], root=R, kick=True)
+        self.china_quarters(t0, 4, every=2.0, vel=110)
+        self.china_quarters(t0 + bars(4), 4, every=1.0)
+        for b in range(8):
+            if b % 2 == 1:
                 self.drum(t0 + b * BAR + 2.0, "snare", 123)
-            elif b >= 16:
-                self.drum(t0 + b * BAR + 2.0, "snare", 125)
-        # orchestral stabs sync with chugs bars 5-12 (staccato octaves)
-        for b in range(4, 12):
-            for i, c in enumerate(rows[b]):
-                if c == "X":
-                    t = t0 + b * BAR + i * 0.25
-                    for p in (54 + 0, 54 + 12):  # F#3/F#4 stabs
+        # orchestral stabs sync bars 5-8
+        for b in range(4, 8):
+            for i in range(16):
+                pass
+        for b, row in enumerate(["C..C....dC..C...", "C..C....dC..C2..",
+                                 "C..C....dC..CC..", "C..C..dd..dd2.f."]):
+            for i, c in enumerate(row):
+                if c in "Cd2":
+                    t = t0 + bars(4 + b) + i * 0.25
+                    for p in (54, 66):
                         self.strings_stac.add(t, 0.3, p, 104, "stac")
-        # the climax lead: leitmotif in whole notes, transposed to F# world
-        for n in self.motif_notes(t0 + bars(8), 78, stretch=2.0, vel=116):
+        # ---- FALSE ENDING: bar 9 = silence + feedback swell
+        t9 = t0 + bars(8)
+        self.gtr(t9, bars(1), R + 24, 70, "sus", track=self.gtr_l)
+        self.fx.add(t9 + bars(0.5), bars(0.5), 0, 90, "riser")
+        # ---- phase 2: RE-DROP at 88 BPM (bars 10-20), quarter-time filth
+        t = t0 + bars(9)
+        self.sub.add(t, 3.0, 18, 127)
+        self.fx.add(t, 0.9, 0, 118, "impact")
+        self.riff(t, [
+            "C.......C...C...",
+            "C.......C..dC.r.",
+            "C.......C...C...",
+            "C....ddC...dd.D.",
+        ], root=R, kick=True)
+        self.china_quarters(t, 4, every=2.0, vel=112)
+        self.halftime_snare(t, 4, beat=2.0, vel=125)
+        # leitmotif lead over the filth — beauty over brutality
+        for n in self.motif_notes(t, 78, stretch=2.0, vel=116):
             self.lead.notes.append(n.tagged("vib"))
-        # choir swell through the escalation
+        # escalation: bounce grids + choir + bomb-blast burst
+        t = t0 + bars(13)
+        self.riff(t, [
+            "C.C.CC..C.C.CCC.",
+            "C.C.CC..C.C.ddd.",
+            "CC..CC..CC..dddd",
+        ], root=R, kick=True)
+        self.china_quarters(t, 3, every=1.0)
+        self.halftime_snare(t, 3)
         for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
             third = 4 if q == "maj" else 3
-            t = t0 + bars(12 + i * 2)
-            for p in (66 + roff - 2, 66 + roff - 2 + third, 66 + roff - 2 + 7):
-                self.choir.add(t, bars(2), p, 92 + i * 6, "sus")
-        # sub drops at each 4-bar escalation
-        for bb, vel in ((0, 127), (4, 120), (8, 122), (12, 124), (16, 126)):
-            self.sub.add(t0 + bars(bb), 2.5, 18, vel)
-        # bar 20: single hit beat 1... silence... final ring w/ dive
+            tt = t0 + bars(12 + i * 2)
+            for p in (64 + roff, 64 + roff + third, 64 + roff + 7):
+                self.choir.add(tt, bars(2), p, 92 + i * 6, "sus")
+        self.blast_bomb(t0 + bars(16), 1)   # one bar of bomb blast chaos
+        self.riff(t0 + bars(16), ["................"], root=R, kick=False)
+        for tr in (self.gtr_l, self.gtr_r):
+            for i in range(16):
+                tr.add(t0 + bars(16) + i * 0.25, 0.24, R + 24, 100, "trem")
+        # bars 18-19: unison quarters, pinch layered
+        self.riff(t0 + bars(17), [
+            "C...C...C...C...",
+            "C...C...C...C...",
+        ], root=R, kick=True)
+        for q in range(8):
+            self.drum(t0 + bars(17) + q, "china", 116)
+            if q % 2 == 0:
+                self.lead.add(t0 + bars(17) + q, 0.9, R + 36, 118, "pinch")
+        self.halftime_snare(t0 + bars(17), 2, vel=126)
+        # bar 20: final hit -> ring -> dive out
         t_end = t0 + bars(19)
-        self.ring(t_end, 3.0, [R, R + 12], 120)
+        for tr in (self.gtr_l, self.gtr_r):
+            tr.add(t_end, 3.6, R, 122, "dive", "sus")
+        self.bassn(t_end, 3.4, R, 118, "sus")
         self.drum(t_end, "china", 120)
         self.drum(t_end, "kick", 124)
+        self.sub.add(t_end, 2.5, 18, 126)
         self.fx.add(t_end, 3.0, R, 110, "dive")
 
     def outro(self):
         t0 = self.sec["outro"]
-        # strings restate the motif over a ringing detuned chord; slow fade
         self.strings.extend(self.motif_notes(t0, 66, stretch=1.5, vel=92))
-        for p in (30, 42, 49):   # F#1 5th stack ring
+        for p in (30, 42, 49):
             self.gtr_l.add(t0, bars(6), p, 82, "sus")
             self.gtr_r.add(t0, bars(6), p, 82, "sus")
-        self.bass.add(t0, bars(6), 30, 84, "sus")
+        self.bassn(t0, bars(6), 30, 84, "sus")
         self.strings_chord(t0 + bars(4), bars(4), -2, "min", vel=72, base=44)
         for p in (64, 67, 71):
             self.choir.add(t0 + bars(4), bars(4), p, 70, "sus")

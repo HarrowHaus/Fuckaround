@@ -48,29 +48,34 @@ IR_421 = os.path.join(SAMPLES, "kalthallen/KalthallenCabsIR/Kalthallen IRs/013c-
 SSO_DIR = os.path.join(SAMPLES, "sso/Sonatina Symphonic Orchestra")
 
 # METAL-GTX keyswitches (SFZ c-1 = 0)
-KS = dict(pm=22, sus=19, hammer=26, pull=25, slide_in=27, legato=29,
-          pinch=10, nat_harm=9)
+KS = dict(pm=22, pmx=20, sus=19, hammer=26, pull=25, slide_in=27, legato=29,
+          pinch=10, nat_harm=9, fall=5, dive=110)   # dive = Sus_PBR24
 
-
-# ------------------------------------------------------------------ MIDI
 
 def guitar_keyswitches(notes):
     """Emit a keyswitch note whenever the required articulation changes.
-    pm -> Mute_Alt; everything else -> Sus_Alt; 'fast' runs get hammer-on /
-    pull-off keyswitches based on melodic direction (real legato playing)."""
+    Priority: dive > pinch > fall > slide > pmx > pm; 'fast' runs get
+    hammer-on / pull-off keyswitches by melodic direction (real legato)."""
     ks_events = []
     notes = sorted(notes, key=lambda n: n.start)
     cur = None
     prev_pitch = None
     prev_end = -10.0
     for n in notes:
-        if "pm" in n.tags:
-            want = "pm"
-        elif "fast" in n.tags and prev_pitch is not None \
-                and n.start - prev_end < 0.20 and abs(n.pitch - prev_pitch) <= 4:
-            want = "hammer" if n.pitch > prev_pitch else "pull"
-        else:
-            want = "sus"
+        want = None
+        for tag, name in (("dive", "dive"), ("pinch", "pinch"),
+                          ("fall", "fall"), ("slide", "slide_in"),
+                          ("pmx", "pmx"), ("pm", "pm")):
+            if tag in n.tags:
+                want = name
+                break
+        if want is None:
+            if "fast" in n.tags and prev_pitch is not None \
+                    and n.start - prev_end < 0.20 \
+                    and abs(n.pitch - prev_pitch) <= 4:
+                want = "hammer" if n.pitch > prev_pitch else "pull"
+            else:
+                want = "sus"
         if want != cur:
             ks_events.append((max(0.0, n.start - 0.06), 0.04, KS[want], 100))
             cur = want
@@ -81,7 +86,14 @@ def guitar_keyswitches(notes):
 def write_guitar_midi(score, track_name, path):
     tr = score.tracks[track_name]
     ks = guitar_keyswitches(tr.notes)
-    write_track_midi(score, tr, path, extra_notes=ks)
+    # whammy dives: pitch wheel ramps on 'dive' notes (Sus_PBR24 = ±24 semi
+    # bend range, so -8192 = 2 octaves down, -4096 = 1 octave)
+    bends = []
+    for n in tr.notes:
+        if "dive" in n.tags:
+            depth = -8192 if n.dur >= 2.0 else -4096
+            bends.append((n.start, n.dur, depth))
+    write_track_midi(score, tr, path, extra_notes=ks, bends=bends)
 
 
 def load_midimap(path):
@@ -100,6 +112,7 @@ def pick_drum_mapping(midimap):
         "snare": "snare_on_center",
         "china": "china_18_inch",
         "crash1": "crash1", "crash2": "crash2",
+        "crash1_stop": "crash1_stop", "crash2_stop": "crash2_stop",
         "ride_bell": "ride_bell1", "ride": "ride",
         "hihat_closed": "hihat_closed1",
         "tom1": "tom_1", "tom2": "tom_2", "tom_floor": "tom_4",

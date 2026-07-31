@@ -18,7 +18,8 @@ def _tempo_events(score):
 
 
 def write_track_midi(score, track, path, pitch_of=None, vel_of=None,
-                     chan=0, extra_notes=None, absolute_seconds=False):
+                     chan=0, extra_notes=None, absolute_seconds=False,
+                     bends=None):
     """Write one Track to a single-track MIDI file.
 
     pitch_of/vel_of: optional callables (note) -> int for remapping
@@ -55,6 +56,19 @@ def write_track_midi(score, track, path, pitch_of=None, vel_of=None,
                                         channel=chan, time=0)))
         events.append((off_t, 1, Message("note_off", note=pitch, velocity=0,
                                          channel=chan, time=0)))
+    # pitch-wheel ramps: (start_beat, dur_beats, target_value); ramp over the
+    # first 85% of the note, then snap back to center after it ends
+    for (s, d, target) in (bends or []):
+        steps = 28
+        for k in range(steps + 1):
+            frac = k / steps
+            t = s + d * 0.85 * frac
+            val = int(target * (frac ** 1.5))       # accelerating fall
+            events.append((int(round(t2t(t))), 1,
+                           Message("pitchwheel", pitch=max(-8192, min(8191, val)),
+                                   channel=chan, time=0)))
+        events.append((int(round(t2t(s + d + 0.05))), 1,
+                       Message("pitchwheel", pitch=0, channel=chan, time=0)))
     for (s, d, p, v) in (extra_notes or []):
         on_t = max(0, int(round(t2t(s))))
         off_t = max(on_t + 8, int(round(t2t(s + d))))
