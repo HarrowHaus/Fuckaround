@@ -1,0 +1,155 @@
+"""DSP utilities implementing the research mix recipes.
+
+pedalboard supplies EQ/comp/convolution/limiting; this module adds what it
+lacks: sidechain ducking, band splitting, soft clipping, LUFS normalization,
+and stem alignment helpers.
+"""
+
+import numpy as np
+import scipy.signal as sig
+import soundfile as sf
+import pyloudnorm as pyln
+
+SR = 48000
+
+
+def load(path, sr=SR):
+    x, fs = sf.read(path, always_2d=True)
+    x = x.T.astype(np.float64)  # (ch, n)
+    if fs != sr:
+        n = int(round(x.shape[1] * sr / fs))
+        x = sig.resample(x, n, axis=1)
+    return x
+
+
+def save(path, x, sr=SR, subtype="FLOAT"):
+    sf.write(path, np.asarray(x).T, sr, subtype=subtype)
+
+
+def to_stereo(x):
+    x = np.atleast_2d(x)
+    if x.shape[0] == 1:
+        return np.vstack([x, x])
+    return x[:2]
+
+
+def pad_to(x, n):
+    if x.shape[1] >= n:
+        return x[:, :n]
+    return np.pad(x, ((0, 0), (0, n - x.shape[1])))
+
+
+def mix_stems(stems_gains, n=None):
+    """stems_gains: list of (array, gain_db). Returns summed stereo."""
+    n = n or max(s.shape[1] for s, _ in stems_gains)
+    out = np.zeros((2, n))
+    for s, g in stems_gains:
+        s = pad_to(to_stereo(s), n)
+        out += s * db(g)
+    return out
+
+
+def db(x):
+    return 10.0 ** (x / 20.0)
+
+
+def peak_db(x):
+    p = np.max(np.abs(x)) + 1e-12
+    return 20 * np.log10(p)
+
+
+def rms_db(x):
+    return 20 * np.log10(np.sqrt(np.mean(x ** 2)) + 1e-12)
+
+
+# ------------------------------------------------------------------ filters
+
+def butter_split(x, freq, sr=SR, order=4):
+    """Linkwitz-style band split: returns (low, high), phase-coherent enough
+    for parallel processing when both bands are recombined."""
+    sos_lo = sig.butter(order, freq, "low", fs=sr, output="sos")
+    sos_hi = sig.butter(order, freq, "high", fs=sr, output="sos")
+    return sig.sosfiltfilt(sos_lo, x, axis=-1), sig.sosfiltfilt(sos_hi, x, axis=-1)
+
+
+def hpf(x, freq, sr=SR, order=4):
+    sos = sig.butter(order, freq, "high", fs=sr, output="sos")
+    return sig.sosfiltfilt(sos, x, axis=-1)
+
+
+def lpf(x, freq, sr=SR, order=4):
+    sos = sig.butter(order, freq, "low", fs=sr, output="sos")
+    return sig.sosfiltfilt(sos, x, axis=-1)
+
+
+def mono_below(x, freq, sr=SR):
+    """Research rule: mono below ~120 Hz."""
+    lo, hi = butter_split(x, freq, sr)
+    lo_m = np.mean(lo, axis=0, keepdims=True)
+    return np.vstack([lo_m, lo_m]) + hi
+
+
+# ------------------------------------------------------------ dynamics
+
+def envelope(x, sr=SR, attack_ms=5.0, release_ms=60.0):
+    """Peak envelope follower (mono reduction of the key signal)."""
+    key = np.max(np.abs(np.atleast_2d(x)), axis=0)
+    a_a = np.exp(-1.0 / (sr * attack_ms / 1000.0))
+    a_r = np.exp(-1.0 / (sr * release_ms / 1000.0))
+    env = np.empty_like(key)
+    e = 0.0
+    for i, v in enumerate(key):
+        coef = a_a if v > e else a_r
+        e = coef * e + (1 - coef) * v
+        env[i] = e
+    return env
+
+
+def sc_duck(target, key, amount_db=3.0, thresh_db=-30.0,
+            attack_ms=2.0, release_ms=50.0, sr=SR, band=None):
+    """Sidechain duck `target` from `key`. If band=(lo,hi) only that band of
+    the target is ducked (dynamic-EQ style, per research)."""
+    env = envelope(key, sr, attack_ms, release_ms)
+    env_db = 20 * np.log10(env + 1e-9)
+    over = np.clip((env_db - thresh_db) / max(1e-9, -thresh_db), 0, 1)
+    gain = 10 ** ((-amount_db * over) / 20.0)
+    if band is None:
+        return target * gain
+    lo, rest = butter_split(target, band[1], sr)
+    if band[0] > 20:
+        sub, lo_mid = butter_split(lo, band[0], sr)
+        return sub + lo_mid * gain + rest
+    return lo * gain + rest
+
+
+def soft_clip(x, drive_db=0.0, ceiling_db=0.0):
+    """tanh soft clipper — the modern metal loudness engine (research §5)."""
+    c = db(ceiling_db)
+    g = db(drive_db)
+    return np.tanh(x * g / c) * c
+
+
+def transient_shape(x, attack_gain_db=3.0, sr=SR):
+    """Simple transient enhancer: fast-minus-slow envelope drives gain."""
+    fast = envelope(x, sr, 0.5, 30.0)
+    slow = envelope(x, sr, 12.0, 120.0)
+    diff = np.clip((fast - slow) / (slow + 1e-9), 0, 3.0)
+    gain = 1.0 + (db(attack_gain_db) - 1.0) * (diff / 3.0)
+    return x * gain
+
+
+# ------------------------------------------------------------ loudness
+
+def lufs(x, sr=SR):
+    meter = pyln.Meter(sr)
+    return meter.integrated_loudness(np.asarray(x).T)
+
+
+def normalize_lufs(x, target=-8.0, sr=SR):
+    cur = lufs(x, sr)
+    return x * db(target - cur), cur
+
+
+def true_peak_db(x, sr=SR):
+    up = sig.resample_poly(x, 4, 1, axis=-1)
+    return peak_db(up)

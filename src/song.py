@@ -87,14 +87,14 @@ class Song:
         """Palm-muted chug on both rhythm guitars + bass lock."""
         for tr in (self.gtr_l, self.gtr_r):
             tr.add(t, dur * 0.55, pitch, vel, "pm")
-        self.bass.add(t, dur * 0.6, pitch - 12, min(127, vel + 5), "pm")
+        self.bass.add(t, dur * 0.6, pitch, min(127, vel + 5), "pm")
 
     def ring(self, t, dur, pitches, vel):
         """Open ringing chord on both guitars + bass root."""
         for tr in (self.gtr_l, self.gtr_r):
             for p in pitches:
                 tr.add(t, dur, p, vel, "sus")
-        self.bass.add(t, dur, pitches[0] - 12, vel, "sus")
+        self.bass.add(t, dur, pitches[0], vel, "sus")
 
     def trem(self, tr, t0, nbars, pitch_fn, vel_base=96):
         """Tremolo-picked 16ths; alternating velocities simulate down/up."""
@@ -224,7 +224,7 @@ class Song:
         # bass: driving 8ths on roots
         for i in range(16 * 8):
             bar_i = (i // 8) % 4
-            self.bass.add(t0 + i * 0.5, 0.45, 32 + CYCLE[bar_i] - 12 + 12,
+            self.bass.add(t0 + i * 0.5, 0.45, 32 + CYCLE[bar_i],
                           102, "pick")
         # drums: traditional blast; china for last 2 bars of each 8
         self.blast_traditional(t0, 6)
@@ -260,7 +260,7 @@ class Song:
                 if acc and (b % 2 == 1 or variant):
                     for tr in (self.gtr_l, self.gtr_r):
                         tr.add(t, 0.4, acc, 112, "sus")
-                    self.bass.add(t, 0.4, 33 - 12 if acc == 45 else 38 - 12,
+                    self.bass.add(t, 0.4, 33 if acc == 45 else 38,
                                   110, "pick")
                 else:
                     self.chug(t, 0.5, ROOT, 100)
@@ -397,7 +397,7 @@ class Song:
                 for j, p in enumerate(arp):
                     self.clean.add(t + j * 0.5, 0.9, p, 78 + (j == 0) * 10, "clean")
                 self.strings_chord(t, BAR, roff, q, vel=64, base=44)
-                self.bass.add(t, BAR, 32 + roff - 12, 72, "sus")
+                self.bass.add(t, BAR, 32 + roff, 72, "sus")
         # riser: strings crescendo + snare roll last 2 bars
         self.fx.add(t0 + bars(6), bars(2), 0, 100, "riser")
         for i in range(32):
@@ -514,7 +514,7 @@ class Song:
         for p in (30, 42, 49):   # F#1 5th stack ring
             self.gtr_l.add(t0, bars(6), p, 82, "sus")
             self.gtr_r.add(t0, bars(6), p, 82, "sus")
-        self.bass.add(t0, bars(6), 18, 84, "sus")
+        self.bass.add(t0, bars(6), 30, 84, "sus")
         self.strings_chord(t0 + bars(4), bars(4), -2, "min", vel=72, base=44)
         for p in (64, 67, 71):
             self.choir.add(t0 + bars(4), bars(4), p, 70, "sus")
