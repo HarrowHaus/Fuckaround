@@ -67,7 +67,7 @@ def build_drums():
     snare, got_s = bus("snare_top", "snare_bottom")
     strig, _ = bus("snare_trigger")
     snare = snare + dsp.pad_to(dsp.to_stereo(strig), n) * db(-8.0)
-    toms, got_t = bus("tom")
+    toms, got_t = bus("tom1", "tom2", "tom3", "tom4")
 
     def pair(lkey, rkey):
         out = np.zeros((2, n))
