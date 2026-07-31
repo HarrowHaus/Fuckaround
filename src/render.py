@@ -124,7 +124,8 @@ def write_drum_midi(score, path, midimap_path):
         if name in mapping:
             return mapping[name]
         return None
-    write_track_midi(score, tr, path, pitch_of=pitch_of, chan=9)
+    write_track_midi(score, tr, path, pitch_of=pitch_of, chan=9,
+                     absolute_seconds=True)
 
 
 def write_all_midis():

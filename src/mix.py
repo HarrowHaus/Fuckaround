@@ -322,6 +322,15 @@ def main():
         json.dump(report, f, indent=2)
     print(json.dumps(report, indent=2))
 
+    # 320 kbps MP3 of the master for easy listening
+    import subprocess
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error",
+                    "-i", os.path.join(MIX, "where_light_comes_to_die_master.wav"),
+                    "-codec:a", "libmp3lame", "-b:a", "320k",
+                    os.path.join(MIX, "where_light_comes_to_die_master.mp3")],
+                   check=True)
+    print("mp3 written")
+
 
 if __name__ == "__main__":
     main()

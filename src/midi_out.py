@@ -18,32 +18,43 @@ def _tempo_events(score):
 
 
 def write_track_midi(score, track, path, pitch_of=None, vel_of=None,
-                     chan=0, extra_notes=None):
+                     chan=0, extra_notes=None, absolute_seconds=False):
     """Write one Track to a single-track MIDI file.
 
     pitch_of/vel_of: optional callables (note) -> int for remapping
     (drum name -> note number, keyswitch injection, etc.).
     extra_notes: additional (start_beat, dur, pitch, vel) tuples to merge
     (used for keyswitches).
+    absolute_seconds: DrumGizmo ignores set_tempo and plays quarter=1s, so
+    for it we bake the tempo map in by writing tick = seconds * TPB.
     """
+    if absolute_seconds:
+        def t2t(beat):
+            return score.beats_to_seconds(beat) * TPB
+    else:
+        def t2t(beat):
+            return beat * TPB
     events = []  # (tick, order, msg)
-    for tick, kind, val in _tempo_events(score):
-        events.append((tick, 0, MetaMessage("set_tempo", tempo=val, time=0)))
+    if absolute_seconds:
+        events.append((0, 0, MetaMessage("set_tempo", tempo=1_000_000, time=0)))
+    else:
+        for tick, kind, val in _tempo_events(score):
+            events.append((tick, 0, MetaMessage("set_tempo", tempo=val, time=0)))
     notes = list(track.notes)
     for n in notes:
         pitch = pitch_of(n) if pitch_of else n.pitch
         if pitch is None:
             continue
         vel = vel_of(n) if vel_of else n.vel
-        on_t = max(0, int(round(n.start * TPB)))
-        off_t = max(on_t + 8, int(round((n.start + n.dur) * TPB)))
+        on_t = max(0, int(round(t2t(n.start))))
+        off_t = max(on_t + 8, int(round(t2t(n.start + n.dur))))
         events.append((on_t, 2, Message("note_on", note=pitch, velocity=vel,
                                         channel=chan, time=0)))
         events.append((off_t, 1, Message("note_off", note=pitch, velocity=0,
                                          channel=chan, time=0)))
     for (s, d, p, v) in (extra_notes or []):
-        on_t = max(0, int(round(s * TPB)))
-        off_t = max(on_t + 8, int(round((s + d) * TPB)))
+        on_t = max(0, int(round(t2t(s))))
+        off_t = max(on_t + 8, int(round(t2t(s + d))))
         events.append((on_t, 2, Message("note_on", note=p, velocity=v,
                                         channel=chan, time=0)))
         events.append((off_t, 1, Message("note_off", note=p, velocity=0,
