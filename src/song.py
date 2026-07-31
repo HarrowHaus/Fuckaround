@@ -29,6 +29,8 @@ import random
 ROOT = 32          # G#1
 BASS_ROOT = 20
 BPM_CORE = 130.0
+BPM_BLAST = 160.0   # blast sections: 16th blasts here = 320-BPM equivalents
+BPM_PEAK = 152.0
 BPM_FINAL = 100.0
 BPM_REDROP = 88.0
 
@@ -66,6 +68,12 @@ class Song:
             self.sec[name] = pos
             pos += bars(ln)
         self.total_beats = pos
+        # tempo gear changes — the deathcore way: blasts sprint, grooves sit,
+        # breakdowns drop anchor
+        self.s.set_tempo(self.sec["blast_a"], BPM_BLAST)
+        self.s.set_tempo(self.sec["verse1"], BPM_CORE)
+        self.s.set_tempo(self.sec["peak"], BPM_PEAK)
+        self.s.set_tempo(self.sec["peak"] + bars(16), BPM_CORE)
         self.s.set_tempo(self.sec["final_bd"], BPM_FINAL)
         # the re-drop: even slower after the false ending
         self.s.set_tempo(self.sec["final_bd"] + bars(9), BPM_REDROP)
@@ -174,6 +182,50 @@ class Song:
             self.drum(t, "snare", vel_ladder(vel - 4, i, (0, -7, -3, -9)))
             if i % 2 == 0:
                 self.drum(t, cym, 86 if i % 4 else 94)
+
+    # ---- 16th-grid blasts: at 152-160 BPM these are the 300-320 equivalents
+    def blast_trad16(self, t0, nbars, cym="ride_bell", vel_s=100, vel_k=96):
+        """Traditional blast doubled: snare every 16th, kick interleaved a
+        32nd behind — combined ~21 hits/sec at 160."""
+        for i in range(int(nbars * 16)):
+            t = t0 + i * 0.25
+            self.drum(t, "snare", vel_ladder(vel_s, i, (0, -9, -4, -11)))
+            self.drum(t + 0.125, "kick", vel_ladder(vel_k, i), dur=0.1)
+            if i % 2 == 0:
+                self.drum(t, cym, 82 if i % 4 else 92)
+
+    def blast_hammer16(self, t0, nbars, cym="china", vel=104):
+        """Hammer at 16ths: kick+snare unison wall."""
+        for i in range(int(nbars * 16)):
+            t = t0 + i * 0.25
+            self.drum(t, "kick", vel_ladder(vel - 4, i), dur=0.1)
+            self.drum(t, "snare", vel_ladder(vel, i, (0, -8, -3, -10)))
+            if i % 2 == 0:
+                self.drum(t, cym, 84 if i % 4 else 93)
+
+    def blast_bomb16(self, t0, nbars, cym="china", vel=104):
+        """Bomb blast: snare 16ths, kicks doubled underneath in 32nds."""
+        for i in range(int(nbars * 16)):
+            t = t0 + i * 0.25
+            self.drum(t, "snare", vel_ladder(vel, i, (0, -8, -3, -10)))
+            self.drum(t, "kick", vel_ladder(vel - 8, i), dur=0.08)
+            self.drum(t + 0.125, "kick", vel_ladder(vel - 14, i), dur=0.08)
+            if i % 2 == 0:
+                self.drum(t, cym, 84 if i % 4 else 92)
+
+    def blast_gravity16(self, t0, nbars, cym="china", vel=102):
+        """Gravity blast: one-handed roll = snare 32nds (strong downstroke on
+        the 16th, weaker upstroke on the off-32nd), kick 16ths, china
+        quarters. The Olympics move."""
+        for i in range(int(nbars * 16)):
+            t = t0 + i * 0.25
+            self.drum(t, "snare", vel_ladder(vel, i, (0, -6, -3, -8)))
+            self.drum(t + 0.125, "snare",
+                      vel_ladder(vel - 24, i, (0, -5, -2, -6)))
+            self.drum(t, "kick", vel_ladder(vel - 6, i), dur=0.1)
+        for b in range(int(nbars)):
+            for q in range(4):
+                self.drum(t0 + b * BAR + q, cym, 108 if q == 0 else 96)
 
     def dkick16(self, t0, nbars, snare_beats=(1.0, 3.0), cym="ride_bell"):
         for i in range(int(nbars * 16)):
@@ -308,10 +360,13 @@ class Song:
             for i in range(8):
                 self.bassn(t0 + b * BAR + i * 0.5, 0.45,
                            32 + row[i * 2], 102, "pick")
-        self.blast_traditional(t0, 6)
-        self.blast_traditional(t0 + bars(6), 2, cym="china")
-        self.blast_traditional(t0 + bars(8), 6)
-        self.blast_bomb(t0 + bars(14), 2)          # escalate out
+        # blast gear-box at 160: trad16 -> hammer -> trad -> bomb -> GRAVITY
+        self.blast_trad16(t0, 4)
+        self.blast_hammer16(t0 + bars(4), 2)
+        self.blast_trad16(t0 + bars(6), 2, cym="china")
+        self.blast_trad16(t0 + bars(8), 4)
+        self.blast_bomb16(t0 + bars(12), 2)
+        self.blast_gravity16(t0 + bars(14), 2)     # the Olympics moment
         t = t0 + bars(8)
         for i in range(8 * 8):
             bar_i = (i // 8) % 4
@@ -402,8 +457,9 @@ class Song:
             up = HARM_MINOR[(deg + 2) % 7] + (12 if (deg + 2) >= 7 else 0)
             self.lead.notes.append(Note(n.start, n.dur, 80 + up, 104,
                                         frozenset({"vib", "harm"})))
-        self.blast_traditional(t0, 8)
-        self.blast_hammer(t0 + bars(8), 8)
+        self.blast_trad16(t0, 8)
+        self.blast_hammer16(t0 + bars(8), 6)
+        self.blast_bomb16(t0 + bars(14), 2)
         for rep in range(4):
             for i, (roff, q) in enumerate(zip(CYCLE, CYCLE_QUAL)):
                 t = t0 + bars(rep * 4 + i)
@@ -587,7 +643,7 @@ class Song:
             tt = t0 + bars(12 + i * 2)
             for p in (64 + roff, 64 + roff + third, 64 + roff + 7):
                 self.choir.add(tt, bars(2), p, 92 + i * 6, "sus")
-        self.blast_bomb(t0 + bars(16), 1)   # one bar of bomb blast chaos
+        self.blast_bomb16(t0 + bars(16), 1)   # bomb chaos: 32nd kicks at 88
         self.riff(t0 + bars(16), ["................"], root=R, kick=False)
         for tr in (self.gtr_l, self.gtr_r):
             for i in range(16):
