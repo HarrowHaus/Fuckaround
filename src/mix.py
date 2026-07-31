@@ -406,7 +406,7 @@ def main():
                                        attack_ms=30, release_ms=150)]), mixbus)
     mixbus = dsp.soft_clip(mixbus, drive_db=1.5)
     mixbus = mixbus * db(-6.0 - dsp.peak_db(mixbus))    # -6 dBFS headroom
-    dsp.save(os.path.join(MIX, "instrumental_vocal_ready.wav"), mixbus)
+    dsp.save(os.path.join(MIX, songmod.title() + "_vocal_ready.wav"), mixbus)
 
     # --------- mastering
     m = fx(Pedalboard([
@@ -451,7 +451,7 @@ def main():
         "vocal_ready_peak_dbfs": round(dsp.peak_db(mixbus), 2),
         "duration_s": round(m.shape[1] / SR, 1),
     }
-    with open(os.path.join(MIX, "report.json"), "w") as f:
+    with open(os.path.join(MIX, "report_" + songmod.title() + ".json"), "w") as f:
         json.dump(report, f, indent=2)
     print(json.dumps(report, indent=2))
 

@@ -72,7 +72,7 @@ def main():
     out["pocket_2k4k_vs_total_db"] = round(band_db(x, 2000, 4000) - total, 1)
 
     print(json.dumps(out, indent=2))
-    with open(os.path.join(REPO, "mix", "qc.json"), "w") as f:
+    with open(os.path.join(REPO, "mix", "qc_" + songmod.title() + ".json"), "w") as f:
         json.dump(out, f, indent=2)
 
 
