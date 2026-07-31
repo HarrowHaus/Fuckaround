@@ -282,7 +282,7 @@ def main():
     if lead is not None:
         stems_gains.append((lead, 1.0))
     if clean is not None:
-        stems_gains.append((clean, -2.0))
+        stems_gains.append((clean, -8.0))   # the bridge must breathe
     for nm, g in (("strings", -5.0), ("strings_stac", -4.0),
                   ("choir", -6.0)):
         if nm in orch:
@@ -306,7 +306,8 @@ def main():
         HighpassFilter(24),
         LowShelfFilter(100, 0.8),
         PeakFilter(400, -0.8, 1.2),
-        HighShelfFilter(9000, 1.2),
+        PeakFilter(4500, 1.8, 0.9),      # presence lift (QC: was -10 rel mids)
+        HighShelfFilter(9000, 1.8),
     ]), mixbus)
     lo, hi = dsp.butter_split(m, 120)
     lo = fx(Pedalboard([Compressor(threshold_db=-24, ratio=2.0, attack_ms=25,
