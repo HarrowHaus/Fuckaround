@@ -25,6 +25,8 @@ Structure (bars, 4/4):
 from score import Score, Note, humanize, vel_ladder
 import random
 
+random.seed(40)
+
 # ------------------------------------------------------------------ constants
 ROOT = 32          # G#1
 BASS_ROOT = 20
@@ -122,12 +124,12 @@ class Song:
                     self.gtr(t, sdur * 0.5, root, vel, "pm")
                     self.bassn(t, sdur * 0.55, root, vel + 6, "pm")
                 elif ch == "C":
-                    self.gtr(t, sdur * 0.5, root, vel + 10, "pmx")
+                    self.gtr(t, sdur * 0.5, root, vel + 10, "pm")
                     self.bassn(t, sdur * 0.55, root, vel + 12, "pm")
                 elif ch == "d":
                     for k in (0, 1):
                         self.gtr(t + k * sdur / 2, sdur * 0.3, root,
-                                 vel + 4 - 6 * k, "pmx")
+                                 vel + 4 - 6 * k, "pm")
                         self.bassn(t + k * sdur / 2, sdur * 0.3, root,
                                    vel + 8 - 6 * k, "pm")
                         if kick:
@@ -137,7 +139,7 @@ class Song:
                     self.gtr(t, sdur * 0.22, root, vel - 14, "pmx")
                     self.bassn(t, sdur * 0.25, root, vel - 8, "pm")
                 elif ch == "r":
-                    self.gtr(t, sdur * 0.5, root + 1, vel + 6, "pmx")
+                    self.gtr(t, sdur * 0.5, root + 1, vel + 6, "pm")
                     self.bassn(t, sdur * 0.55, root + 1, vel + 10, "pm")
                 elif ch in stab:
                     p = root + stab[ch]
@@ -466,7 +468,7 @@ class Song:
         self.drum(t8, "crash1_stop", 116)
         self.drum(t8, "kick", 122, grid=True)
         for k, tt in enumerate((3.0, 3.25, 3.5)):    # dry pickup chugs
-            self.gtr(t8 + tt, 0.12, ROOT, 96 + k * 6, "pmx")
+            self.gtr(t8 + tt, 0.12, ROOT, 96 + k * 6, "pm")
             self.bassn(t8 + tt, 0.12, ROOT, 104, "pm")
             self.drum(t8 + tt, "kick", 112, dur=0.12, grid=True)
         self.sub.add(t0, 2.0, BASS_ROOT, 124)

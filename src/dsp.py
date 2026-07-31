@@ -177,6 +177,63 @@ def normalize_lufs(x, target=-8.0, sr=SR):
     return x * db(target - cur), cur
 
 
+def ride(x, points, sr=SR, ramp_s=0.15):
+    """Fader automation: points = [(t_seconds, gain_db), ...] step targets;
+    each step ramps over ramp_s. Returns x with the ride applied."""
+    n = np.atleast_2d(x).shape[1]
+    env = np.zeros(n)
+    pts = sorted(points)
+    cur = 0.0
+    idx = 0
+    for t, g in pts:
+        i = min(n, max(0, int(t * sr)))
+        env[idx:i] = cur
+        j = min(n, i + int(ramp_s * sr))
+        if j > i:
+            env[i:j] = np.linspace(cur, g, j - i)
+        cur = g
+        idx = j
+    env[idx:] = cur
+    return np.atleast_2d(x) * (10.0 ** (env / 20.0))[None, :]
+
+
+def bandpass(x, lo, hi, sr=SR, order=2):
+    from scipy.signal import butter, sosfiltfilt
+    sos = butter(order, [lo / (sr / 2), hi / (sr / 2)], btype="band",
+                 output="sos")
+    return sosfiltfilt(sos, np.atleast_2d(x), axis=1)
+
+
+def dynamic_eq(x, lo, hi, thresh_db=-28.0, max_cut_db=5.0,
+               attack_ms=4.0, release_ms=90.0, sr=SR):
+    """Dynamic band cut: attenuates [lo,hi] only when that band is hot —
+    de-harsh / de-bloom that breathes instead of a static notch."""
+    band = bandpass(x, lo, hi, sr)
+    env = envelope(band, sr, attack_ms, release_ms)
+    env_db = 20 * np.log10(env + 1e-9)
+    over = np.clip(env_db - thresh_db, 0.0, None)
+    cut_db = np.clip(over * 0.8, 0.0, max_cut_db)
+    gain = 10.0 ** (-cut_db / 20.0)
+    return x - band + band * gain[None, :]
+
+
+def vacuum_sweep(x, drop_times, bar_s, sr=SR, f_hi=350.0):
+    """Pre-drop momentum: over the bar before each drop, crossfade the full
+    mix into a high-passed version (the 'air gets sucked out' move), then
+    snap back to full weight exactly ON the drop."""
+    y = np.atleast_2d(x).copy()
+    filt = hpf(y, f_hi, order=2)
+    n = y.shape[1]
+    for td in drop_times:
+        i1 = int(td * sr)
+        i0 = int((td - bar_s) * sr)
+        if i0 < 0 or i1 > n or i1 <= i0:
+            continue
+        fade = np.linspace(0.0, 1.0, i1 - i0) ** 1.5
+        y[:, i0:i1] = y[:, i0:i1] * (1 - fade) + filt[:, i0:i1] * fade
+    return y
+
+
 def true_peak_db(x, sr=SR):
     up = sig.resample_poly(x, 4, 1, axis=-1)
     return peak_db(up)

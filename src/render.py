@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(__file__))
+import songmod
 from songmod import build_song
 from midi_out import write_track_midi
 from score import Note
@@ -29,7 +30,7 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAMPLES = os.path.join(REPO, "samples")
 TOOLS = os.path.join(REPO, "tools")
 MIDI_DIR = os.path.join(REPO, "midi")
-STEMS = os.path.join(REPO, "stems")
+STEMS = os.path.join(REPO, "stems", songmod.title())
 
 SFIZZ = os.path.join(TOOLS, "sfizz/build/library/bin/sfizz_render")
 GTX = os.path.join(SAMPLES, "UI_METAL-GTX/Programs/01-METAL-GTX Full.sfz")

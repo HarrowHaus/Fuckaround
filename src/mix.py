@@ -24,9 +24,9 @@ from pedalboard import (Pedalboard, Compressor, HighpassFilter, LowpassFilter,
                         Delay, Chorus, Gain, Limiter, NoiseGate)
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-STEMS = os.path.join(REPO, "stems")
-MIX = os.path.join(REPO, "mix")
 import songmod
+STEMS = os.path.join(REPO, "stems", songmod.title())
+MIX = os.path.join(REPO, "mix")
 MASTER_NAME = songmod.title() + "_master"
 
 
@@ -46,9 +46,13 @@ def stem(name):
 
 # ------------------------------------------------------------------ drums
 
-def build_drums():
+def build_drums(rides=None):
     """Sum DrumGizmo's mic channels into kick/snare/tom/cymbal/room buses,
-    process each per research, add the parallel smash bus, glue + clip."""
+    process each per research, add the parallel smash bus, glue + clip.
+    rides: dict of automation point-lists (seconds, dB) — 'smash' rides the
+    parallel crush + room, 'plate' rides the snare plate throw, 'cym' rides
+    the cymbal bus."""
+    rides = rides or {}
     chans = {}
     for f in glob.glob(os.path.join(STEMS, "drums", "dg*.wav")):
         base = os.path.basename(f)[2:-4].lower()   # e.g. "ohl-0", "kdruml-7"
@@ -92,10 +96,10 @@ def build_drums():
                               oh=got_c, amb=got_a, close_cym=got_h))
     # stereo-place OH pair; room compressed low; close cymbal mics tucked in
     cyms = ohs + hats * db(-3.0)
+    # room mics go to the rideable smash path, not the cymbal bus
     room = fx(Pedalboard([Compressor(threshold_db=-30, ratio=8, attack_ms=2,
                                      release_ms=60), HighpassFilter(250)]),
               amb) * db(-10.0)
-    cyms = cyms + room
 
     kick = fx(Pedalboard([
         HighpassFilter(35),
@@ -119,10 +123,14 @@ def build_drums():
                width=0.9),
         HighpassFilter(450), LowpassFilter(7500),
     ]), snare_dry)
-    # 30 ms pre-delay on the plate
+    # 30 ms pre-delay on the plate; the plate return is RIDDEN — bigger
+    # throws in half-time/breakdown sections, tucked during blasts
     pd = int(0.03 * SR)
     plate = np.pad(plate, ((0, 0), (pd, 0)))[:, :snare_dry.shape[1]]
-    snare_out = snare_dry + plate * db(-14)
+    plate = plate * db(-14)
+    if "plate" in rides:
+        plate = dsp.ride(plate, rides["plate"])
+    snare_out = snare_dry + plate
 
     toms = fx(Pedalboard([
         HighpassFilter(70), PeakFilter(350, -2.5, 1.4),
@@ -130,18 +138,30 @@ def build_drums():
         NoiseGate(threshold_db=-38, ratio=4, release_ms=120),
     ]), toms)
 
+    # cymbal bus gets MIXED, not leveled: wash compression (slow attack lets
+    # the stick through, clamps the bloom), dynamic de-harsh that only bites
+    # when 3-5k actually piles up, and snare-keyed ducking so the crack
+    # always wins over the wash
     cyms = fx(Pedalboard([
         HighpassFilter(400),
-        PeakFilter(3800, -2.5, 2.0),      # blast wash de-harsh
         HighShelfFilter(10000, 1.5),
+        Compressor(threshold_db=-24, ratio=3.0, attack_ms=25, release_ms=140),
     ]), cyms)
+    cyms = dsp.dynamic_eq(cyms, 3000, 5200, thresh_db=-30, max_cut_db=5.0)
+    cyms = dsp.sc_duck(cyms, snare_dry, amount_db=2.5, thresh_db=-24,
+                       attack_ms=2, release_ms=90)
+    if "cym" in rides:
+        cyms = dsp.ride(cyms, rides["cym"])
 
     shells = kick * db(0.0) + snare_out * db(0.0) + toms * db(-2.0)
     smash = fx(Pedalboard([
         Compressor(threshold_db=-34, ratio=12, attack_ms=1.0, release_ms=50),
         LowShelfFilter(90, 2.0), HighShelfFilter(8000, 2.0),
     ]), shells)
-    drums = shells + cyms * db(-6.0) + smash * db(-8.0)
+    smash = smash * db(-8.0) + room * db(-2.0)
+    if "smash" in rides:
+        smash = dsp.ride(smash, rides["smash"])
+    drums = shells + cyms * db(-6.0) + smash
 
     drums = fx(Pedalboard([
         Compressor(threshold_db=-14, ratio=4, attack_ms=20, release_ms=110),
@@ -152,20 +172,35 @@ def build_drums():
 
 # ------------------------------------------------------------------ guitars
 
-def build_guitars():
+def build_guitars(gtr_ride=None):
     l = stem("gtr_l"); r = stem("gtr_r")
     n = max(l.shape[1], r.shape[1])
     post = Pedalboard([
         HighpassFilter(90), LowpassFilter(10000),
         PeakFilter(400, -3.0, 1.2),
         PeakFilter(4000, -4.0, 6.0),
-        PeakFilter(140, -1.5, 1.4),        # chug bloom control
         PeakFilter(2800, -1.5, 1.5),       # vocal pocket prep
     ])
     l = fx(post, dsp.pad_to(l, n)); r = fx(post, dsp.pad_to(r, n))
+    # chug bloom controlled DYNAMICALLY — only compresses 100-230 Hz when a
+    # chug actually blooms, instead of a permanent EQ hole
+    l = dsp.dynamic_eq(l, 100, 230, thresh_db=-26, max_cut_db=4.5,
+                       attack_ms=6, release_ms=120)
+    r = dsp.dynamic_eq(r, 100, 230, thresh_db=-26, max_cut_db=4.5,
+                       attack_ms=6, release_ms=120)
     wall = np.zeros((2, n))
     wall[0] += np.mean(l, axis=0)          # hard pan L
     wall[1] += np.mean(r, axis=0)          # hard pan R
+    # amp-in-the-room: a tiny dark early-reflection bed glued under the wall
+    # (kills the 'DI into a plugin' dryness that reads as fake)
+    room = fx(Pedalboard([
+        Reverb(room_size=0.12, damping=0.7, wet_level=1.0, dry_level=0.0,
+               width=1.0),
+        HighpassFilter(200), LowpassFilter(5500),
+    ]), wall)
+    wall = wall + room * db(-20.0)
+    if gtr_ride:
+        wall = dsp.ride(wall, gtr_ride)
     return wall
 
 
@@ -249,10 +284,61 @@ def build_orchestra(kick_key):
 
 # ------------------------------------------------------------------ main mix
 
+# per-song mix moves, keyed by section names (an engineer's ride sheet):
+# cym_tame = pull cymbal wash in dense blast sections; smash_up = push the
+# parallel crush + room in breakdowns; gtr_up = lean the wall into climaxes;
+# plate_up = bigger snare throws in half-time; drops = vacuum-sweep targets
+RIDE_PLAN = {
+    "where_light_comes_to_die": dict(
+        cym_tame=["blast_a", "peak"],
+        smash_up=["breakdown1", "verse2", "final_bd"],
+        gtr_up=["peak", "final_bd"],
+        plate_up=["breakdown1", "verse2", "final_bd"],
+        drops=["breakdown1", "final_bd"]),
+    "six_feet_is_not_enough": dict(
+        cym_tame=[],
+        smash_up=["slam", "final"],
+        gtr_up=["final"],
+        plate_up=["sludge", "final"],
+        drops=["bounce", "final"]),
+}
+
+
+def section_map():
+    """Section spans in seconds from the active song's score."""
+    score, sec = songmod.build_song()
+    starts = {k: score.beats_to_seconds(v) for k, v in sec.items()}
+    order = sorted(starts.items(), key=lambda kv: kv[1])
+    total = score.beats_to_seconds(score.end_beat())
+    ends = {k: (order[i + 1][1] if i + 1 < len(order) else total)
+            for i, (k, _) in enumerate(order)}
+    bar_s = {k: score.beats_to_seconds(sec[k]) -
+             score.beats_to_seconds(max(0.0, sec[k] - 4.0))
+             for k in sec}
+    return starts, ends, bar_s
+
+
+def ride_pts(names, starts, ends, amount_db):
+    pts = []
+    for nm in names:
+        if nm in starts:
+            pts += [(starts[nm], amount_db), (ends[nm], 0.0)]
+    return sorted(pts)
+
+
 def main():
     os.makedirs(MIX, exist_ok=True)
-    drums, kick_key = build_drums()
-    guitars = build_guitars()
+    starts, ends, bar_s = section_map()
+    plan = RIDE_PLAN.get(songmod.title(), {})
+    drum_rides = dict(
+        smash=ride_pts(plan.get("smash_up", []), starts, ends, 3.0),
+        cym=ride_pts(plan.get("cym_tame", []), starts, ends, -2.0),
+        plate=ride_pts(plan.get("plate_up", []), starts, ends, 5.0),
+    )
+    drum_rides = {k: v for k, v in drum_rides.items() if v}
+    gtr_ride = ride_pts(plan.get("gtr_up", []), starts, ends, 0.7) or None
+    drums, kick_key = build_drums(drum_rides)
+    guitars = build_guitars(gtr_ride)
     lead = build_lead()
     clean = build_clean()
     bass = build_bass(kick_key)
@@ -294,12 +380,26 @@ def main():
                   ("choir", -6.0)):
         if nm in orch:
             stems_gains.append((orch[nm], g))
-    if subs is not None:
-        stems_gains.append((subs, -2.0))
-    if fxs is not None:
-        stems_gains.append((fxs, -6.0))
 
     mixbus = dsp.mix_stems(stems_gains)
+
+    # momentum: the bar before each drop gets the air sucked out of it
+    # (band HPF-sweeps up, snaps back to full weight ON the downbeat);
+    # subs and fx risers live OUTSIDE the vacuum so 808 tails survive stops
+    drops = [starts[nm] for nm in plan.get("drops", []) if nm in starts]
+    if drops:
+        mixbus = dsp.vacuum_sweep(mixbus, drops,
+                                  bar_s.get(plan["drops"][0], 2.0))
+    low_gains = []
+    if subs is not None:
+        low_gains.append((subs, -2.0))
+    if fxs is not None:
+        low_gains.append((fxs, -6.0))
+    if low_gains:
+        n = max([mixbus.shape[1]] + [x.shape[1] for x, _ in low_gains])
+        mixbus = dsp.pad_to(mixbus, n)
+        for x, g in low_gains:
+            mixbus = mixbus + dsp.pad_to(dsp.to_stereo(x), n) * db(g)
 
     # --------- mix bus: glue + gentle tape-ish saturation
     mixbus = fx(Pedalboard([Compressor(threshold_db=-16, ratio=2.0,

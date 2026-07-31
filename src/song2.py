@@ -23,6 +23,8 @@ Movement map (bars, 4/4):
 from score import Score, Note, humanize
 import random
 
+random.seed(41)
+
 TITLE = "six_feet_is_not_enough"
 
 ROOT_A = 32   # G#1 — movements I-II
@@ -106,10 +108,10 @@ class Breakdown:
                     t += swing * sdur          # delayed off-16ths
                 gt = t + late                  # guitars/snare sit behind kick
                 if ch == "X":
-                    self.gtr(gt, sdur * 0.55, root, vel + 6, "pmx")
+                    self.gtr(gt, sdur * 0.55, root, vel + 6, "pm")
                     self.bassn(t, sdur * 0.7, root, vel + 8, "pm")
                 elif ch == "x":
-                    self.gtr(gt, sdur * 0.4, root, vel - 12, "pmx")
+                    self.gtr(gt, sdur * 0.4, root, vel - 12, "pm")
                     self.bassn(t, sdur * 0.5, root, vel - 6, "pm")
                 elif ch == "H":
                     self.gtr(gt, sdur * 1.1, root, vel + 2, "pm")
@@ -134,7 +136,7 @@ class Breakdown:
                     self.gtr(gt, sdur * 1.6, root + 1, vel + 4, "slide", "sus")
                     self.bassn(t, sdur * 1.4, root + 1, vel + 4, "pick")
                 elif ch == "r":
-                    self.gtr(gt, sdur * 0.55, root + 1, vel + 4, "pmx")
+                    self.gtr(gt, sdur * 0.55, root + 1, vel + 4, "pm")
                     self.bassn(t, sdur * 0.6, root + 1, vel + 6, "pm")
                 elif ch == "#":
                     self.gtr(gt, 0.07, root, 58, "pmx")
@@ -192,7 +194,7 @@ class Breakdown:
         self.feedback(t0, bars(2), ROOT_A, interval=6)
         # the motif: 1 . . (3) | . (2and) . . — three lone hits, no drums
         for i, (tt, v) in enumerate([(0.0, 112), (2.0, 108), (5.5, 116)]):
-            self.gtr(t0 + tt, 0.5, ROOT_A, v, "pmx")
+            self.gtr(t0 + tt, 0.5, ROOT_A, v, "pm")
         self.feedback(t0 + bars(2), bars(2), ROOT_A, interval=1, vel=82)
         self.fx.add(t0 + bars(3), bars(1), 0, 96, "riser")   # pick-scrape-ish
         self.sub808(t0 + bars(3) + 3.0, ROOT_A, dur=1.5, vel=110)
@@ -239,7 +241,7 @@ class Breakdown:
                 self.drum(t0 + bars(b) + tt, d, 104)
         # bars 11-12: THE CALLOUT — drums out, one dry chug per beat + vox
         for beat in range(8):
-            self.gtr(t0 + bars(10) + beat * 1.0, 0.4, ROOT_A, 104, "pmx")
+            self.gtr(t0 + bars(10) + beat * 1.0, 0.4, ROOT_A, 104, "pm")
             self.bassn(t0 + bars(10) + beat * 1.0, 0.5, ROOT_A, 108, "pm")
         self.feedback(t0 + bars(10), bars(2), ROOT_A, interval=1, vel=74)
         self.sub808(t0, ROOT_A); self.sub808(t0 + bars(4), ROOT_A)
@@ -308,7 +310,7 @@ class Breakdown:
                 (4, 3.5, 96), (5, 2.0, 108), (6, 0.0, 116), (6, 1.75, 104),
                 (6, 3.5, 100)]
         for b, tt, v in lone:
-            self.gtr(t0 + bars(b) + tt, 0.45, ROOT_B, v, "pmx")
+            self.gtr(t0 + bars(b) + tt, 0.45, ROOT_B, v, "pm")
             self.drum(t0 + bars(b) + tt, "kick", 104, grid=True)
         for b in range(2, 7):
             self.drum(t0 + bars(b) + (3.0 if b % 2 == 0 else 1.0),
@@ -371,7 +373,7 @@ class Breakdown:
             self.gtr(t8 + i * 0.25, 0.24, R + 12, 96, "trem")
         # bar 10: THE HOLE — full-band stop, a-cappella space, sub only
         t9 = t0 + bars(9)
-        self.gtr(t9, 0.5, R, 122, "pmx")
+        self.gtr(t9, 0.5, R, 122, "pm")
         self.bassn(t9, 0.5, R, 118, "pm")
         self.drum(t9, "kick", 124, grid=True)
         self.drum(t9, "crash2_stop", 120)
@@ -413,10 +415,10 @@ class Breakdown:
                   cym="accents", vel=110)
         self.rows(t0 + bars(1), ["X.......X......."], R, snare_beat=None,
                   cym="none", vel=106)
-        self.gtr(t0 + bars(2), 0.5, R, 102, "pmx")
+        self.gtr(t0 + bars(2), 0.5, R, 102, "pm")
         self.drum(t0 + bars(2), "kick", 108, grid=True)
         # the last sound = the first sound
-        self.gtr(t0 + bars(3), 0.6, R, 114, "pmx")
+        self.gtr(t0 + bars(3), 0.6, R, 114, "pm")
         self.feedback(t0 + bars(3), bars(1), R, interval=6, vel=72)
         self.sub808(t0 + bars(3), R, dur=3.0, vel=118)
 
