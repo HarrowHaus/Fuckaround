@@ -322,19 +322,21 @@ def main():
     m = lo + hi
     m = dsp.soft_clip(m, drive_db=3.0)
 
-    # push into target loudness with clip+limit iterations
+    # push into target loudness with clip+limit iterations, converging LUFS
+    # and true peak TOGETHER (sub-heavy material creates intersample peaks
+    # the sample-peak limiter can't see; correcting TP outside the loop
+    # would leave the master quiet)
     target = -8.0
-    for _ in range(4):
+    for _ in range(6):
         cur = dsp.lufs(m)
         m = m * db(min(6.0, target - cur))
         m = dsp.soft_clip(m, drive_db=1.5)
         m = fx(Pedalboard([Limiter(threshold_db=-1.5, release_ms=60)]), m)
-        if abs(dsp.lufs(m) - target) < 0.4:
+        tp = dsp.true_peak_db(m)
+        if tp > -1.0:
+            m = m * db(-1.0 - tp)
+        if abs(dsp.lufs(m) - target) < 0.4 and dsp.true_peak_db(m) <= -0.95:
             break
-    # true peak safety
-    tp = dsp.true_peak_db(m)
-    if tp > -1.0:
-        m = m * db(-1.0 - tp)
 
     dsp.save(os.path.join(MIX, MASTER_NAME + ".wav"), m)
 
