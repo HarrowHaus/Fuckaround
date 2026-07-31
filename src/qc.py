@@ -53,8 +53,10 @@ def main():
     # section dynamics: short-term LUFS at landmarks
     import pyloudnorm as pyln
     meter = pyln.Meter(SR)
-    marks = dict(intro=5, blast_a=30, verse1=60, breakdown1=85, peak=105,
-                 bridge=160, callout=186, final_bd=200, outro=245)
+    from song import build_song
+    score, sec = build_song()
+    marks = {name: score.beats_to_seconds(beat) + 2.0
+             for name, beat in sec.items()}
     for name, t in marks.items():
         i0 = int(t * SR)
         seg = x[:, i0:i0 + 3 * SR]
