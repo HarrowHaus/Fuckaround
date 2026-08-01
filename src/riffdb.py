@@ -18,6 +18,9 @@ from fractions import Fraction
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RAW = os.path.join(REPO, "corpus", "raw")
 OUT = os.path.join(REPO, "corpus", "idiom.json")
+if os.environ.get("ERA") == "modern":
+    RAW = os.path.join(REPO, "corpus", "raw_modern")
+    OUT = os.path.join(REPO, "corpus", "idiom_modern.json")
 
 
 def tempo_at(automations, mi):

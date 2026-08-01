@@ -45,6 +45,55 @@ CANON = [
 ]
 
 
+# Modern canon (2018–2026), Songsterr IDs verified via live API survey
+# (docs/17). Buckets: symphonic / slam / nu / techdeath / downtempo-skronk.
+MODERN = [
+    ("Lorna Shore", "To The Hellfire", 486572),
+    ("Lorna Shore", "Pain Remains I Dancing Like Flames", 519743),
+    ("Lorna Shore", "Sun Eater", 510139),
+    ("Lorna Shore", "Pain Remains III In A Sea Of Fire", 532662),
+    ("Lorna Shore", "Oblivion", 1508430),
+    ("Shadow Of Intent", "The Heretic Prevails", 1158073),
+    ("Shadow Of Intent", "Intensified Genocide", 954231),
+    ("Shadow Of Intent", "From Ruin We Rise", 954346),
+    ("Worm Shepherd", "The River Ov Knives", 501808),
+    ("Ov Sulfur", "Death Ov Circumstance", 583912),
+    ("Slaughter To Prevail", "Baba Yaga", 496758),
+    ("Slaughter To Prevail", "Bratva", 489752),
+    ("Slaughter To Prevail", "Viking", 545423),
+    ("Peelingflesh", "Shoot 2 Kill", 671490),
+    ("Peelingflesh", "Perc 3000", 695639),
+    ("Peelingflesh", "211 187 FFWAS", 567688),
+    ("Signs Of The Swarm", "Amongst The Low And Empty", 553863),
+    ("Signs Of The Swarm", "Death Whistle", 492296),
+    ("AngelMaker", "Leech", 539809),
+    ("Alpha Wolf", "Akudama", 467953),
+    ("Alpha Wolf", "60cm Of Steel", 565179),
+    ("Paleface Swiss", "The Orphan", 550066),
+    ("Paleface Swiss", "River Of Sorrows", 895976),
+    ("Knocked Loose", "Suffocate", 604956),
+    ("Knocked Loose", "Blinding Faith", 591561),
+    ("Knocked Loose", "Deep In The Willow", 551773),
+    ("Bodysnatcher", "King Of The Rats", 709801),
+    ("Whitechapel", "When A Demon Defiles A Witch", 451069),
+    ("Whitechapel", "Hymns In Dissonance", 928410),
+    ("Rivers Of Nihil", "The Silent Life", 446552),
+    ("Rivers Of Nihil", "Where Owls Know My Name", 458926),
+    ("First Fragment", "Gloire Eternelle", 527069),
+    ("Fit For An Autopsy", "Two Towers", 882903),
+    ("Fit For An Autopsy", "Your Pain Is Mine", 496499),
+    ("Black Tongue", "Second Death", 481677),
+    ("Black Tongue", "The Eternal Return To Ruin", 468287),
+    ("Distant", "Exofilth", 523326),
+    ("Enterprise Earth", "Psalm Of Agony", 533253),
+    ("Humanitys Last Breath", "Abyssal Mouth", 443209),
+]
+
+ERA = os.environ.get("ERA", "2007")
+if ERA == "modern":
+    RAW = os.path.join(REPO, "corpus", "raw_modern")
+
+
 def get(url, binary=False):
     req = urllib.request.Request(url, headers={"User-Agent": "research/1.0"})
     with urllib.request.urlopen(req, timeout=30) as r:
@@ -58,26 +107,28 @@ def norm(s):
     return "".join(c for c in s.lower() if c.isalnum())
 
 
-def harvest_song(artist, title):
+def harvest_song(artist, title, song_id=None):
     slug = f"{norm(artist)}__{norm(title)}"
     out = os.path.join(RAW, slug + ".json")
     if os.path.exists(out):
         return "cached"
-    q = urllib.parse.quote(f"{artist} {title}")
-    hits = get(f"https://www.songsterr.com/api/songs?pattern={q}&size=10")
-    hit = None
-    for h in hits:
-        if norm(h["artist"]) == norm(artist) and norm(title) in norm(h["title"]):
-            hit = h
-            break
-    if hit is None:
+    if song_id is None:
+        q = urllib.parse.quote(f"{artist} {title}")
+        hits = get(f"https://www.songsterr.com/api/songs?pattern={q}&size=10")
+        hit = None
         for h in hits:
-            if norm(artist) in norm(h["artist"]):
+            if norm(h["artist"]) == norm(artist) and norm(title) in norm(h["title"]):
                 hit = h
                 break
-    if hit is None:
-        return "notfound"
-    meta = get(f"https://www.songsterr.com/api/meta/{hit['songId']}")
+        if hit is None:
+            for h in hits:
+                if norm(artist) in norm(h["artist"]):
+                    hit = h
+                    break
+        if hit is None:
+            return "notfound"
+        song_id = hit["songId"]
+    meta = get(f"https://www.songsterr.com/api/meta/{song_id}")
     image = meta.get("image")
     rev = meta["revisionId"]
     song = dict(artist=meta["artist"], title=meta["title"],
@@ -111,17 +162,20 @@ def harvest_song(artist, title):
 def main():
     os.makedirs(RAW, exist_ok=True)
     import urllib.parse
+    canon = [(a, t, None) for a, t in CANON]
+    if ERA == "modern":
+        canon = MODERN
     ok = 0
-    for artist, title in CANON:
+    for artist, title, song_id in canon:
         try:
-            r = harvest_song(artist, title)
+            r = harvest_song(artist, title, song_id)
         except Exception as e:
             r = f"ERR {e}"
         print(f"{artist} - {title}: {r}")
         if r.startswith("ok"):
             ok += 1
         time.sleep(1.2)
-    print(f"harvested {ok}/{len(CANON)}")
+    print(f"harvested {ok}/{len(canon)}")
 
 
 if __name__ == "__main__":
