@@ -264,9 +264,9 @@ def build():
              (2, "bell", 350, -1.2, 1.1), (3, "bell", 3000, 1.2, 1.0),
              (4, "hishelf", 8500, 2.0, 0.7)]),
         COMP(-16, 2, 30, 150),
+        JSVOL(0.0),          # convergence trim: drives INTO the clipper
         CLIP(4.5),
         LIMIT(-1.2),
-        JSVOL(0.0),          # convergence trim (patched between passes)
     ]
 
     # ------------------------------------------------------- emit data.lua
@@ -372,7 +372,7 @@ def main():
     data_path, end_s = build()
     out_wav = os.path.join(MIXDIR, songmod.title() + "_reaper_master.wav")
     target = -6.2
-    trim = 0.0
+    trim = 7.0
     for it in range(3):
         os.environ["MASTER_TRIM"] = str(round(trim, 2))
         data_path, _ = build()
