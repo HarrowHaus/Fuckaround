@@ -119,14 +119,18 @@ def LIMIT(thr_db):
 
 
 def JSVOL(vol_db):
-    return {"_fx": "JS: utility/volume", "Volume": vol_db}
+    # sliders: "Adjustment (dB)" (defaults +6!) and "Max Volume (dB)" clamp
+    return {"_fx": "JS: utility/volume", "Adjustment": vol_db,
+            "Max Volume": 150.0}
 
 
 def CLIP(drive_db):
     """LSP Clipper: threshold-style soft clip; sigmoid function, dB in raw
     gain units. drive_db maps to how hard the signal leans on the ceiling."""
+    # ceiling sits just under full scale; loudness comes from DRIVING into
+    # it (the trim upstream), not from lowering the ceiling
     return {"_fx": "LSP Clipper Stereo",
-            "Clipping threshold": 10 ** (-drive_db / 20.0)}
+            "Clipping threshold": 0.94}
 
 
 def PLATE():
@@ -372,8 +376,8 @@ def main():
     data_path, end_s = build()
     out_wav = os.path.join(MIXDIR, songmod.title() + "_reaper_master.wav")
     target = -6.2
-    trim = 7.0
-    for it in range(3):
+    trim = 10.0
+    for it in range(4):
         os.environ["MASTER_TRIM"] = str(round(trim, 2))
         data_path, _ = build()
         if os.path.exists(out_wav):

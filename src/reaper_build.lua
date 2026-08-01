@@ -157,7 +157,7 @@ for _, bus in ipairs(SONG.buses) do
     -- ride: JS volume param envelope
     for _, e in ipairs(fxis) do
       if e[2] == "JS: utility/volume" then
-        fxparam_env(tr, e[1], "volume", SONG.gtr_ride)
+        fxparam_env(tr, e[1], "adjustment", SONG.gtr_ride)
       end
     end
   end
@@ -217,7 +217,7 @@ for _, e in ipairs(mfxis) do
     local n = reaper.TrackFX_GetNumParams(master, e[1])
     for p = 0, n - 1 do
       local _, nm = reaper.TrackFX_GetParamName(master, e[1], p, "")
-      if string.find(string.lower(nm), "volume", 1, true) then
+      if string.find(string.lower(nm), "adjustment", 1, true) then
         reaper.TrackFX_SetParam(master, e[1], p, SONG.master_trim)
         break
       end
