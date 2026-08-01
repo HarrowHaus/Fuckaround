@@ -18,10 +18,41 @@ import random
 from collections import Counter
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-IDIOM = json.load(open(os.path.join(REPO, "corpus", "idiom.json")))
 
-# Drop A# 6-string, low->high MIDI
-TUNING = [34, 41, 46, 51, 55, 60]
+# Two mined dialects: the 2006-2010 canon (idiom.json) and the 2018-2026
+# canon (idiom_modern.json, docs/17). set_dialect() switches every table the
+# generator reads — masks, bigrams, tuning, string names, open-string law.
+IDIOM_TABLES = {"2007": json.load(open(os.path.join(REPO, "corpus",
+                                                    "idiom.json")))}
+_modern = os.path.join(REPO, "corpus", "idiom_modern.json")
+if os.path.exists(_modern):
+    IDIOM_TABLES["modern"] = json.load(open(_modern))
+
+TUNINGS = {
+    "2007": [34, 41, 46, 51, 55, 60],            # drop A# 6-string
+    "modern": [31, 38, 43, 48, 53, 57, 62],      # drop G 7-string
+}
+NAMES = {
+    "2007": ["A#", "F", "A#", "D#", "G", "C"],
+    "modern": ["G", "D", "G", "C", "F", "A", "D"],
+}
+# modern corpus open-string share is 0.23 vs 0.33 (fretted pedals dominate),
+# so the open-gravity rejection threshold is dialect-specific
+OPEN_GRAVITY = {"2007": 0.2, "modern": 0.08}
+
+DIALECT = "2007"
+IDIOM = IDIOM_TABLES["2007"]
+TUNING = list(TUNINGS["2007"])
+STRING_NAMES = list(NAMES["2007"])
+
+
+def set_dialect(name):
+    global DIALECT, IDIOM, BIGRAMS
+    DIALECT = name
+    IDIOM = IDIOM_TABLES[name]
+    TUNING[:] = TUNINGS[name]
+    STRING_NAMES[:] = NAMES[name]
+    BIGRAMS = _build_bigrams(IDIOM)
 
 
 def midi_of(string, fret):
@@ -56,6 +87,13 @@ def sample_mask(rng, band_name, kind):
         pool = _mask_pool(band_name, 6, 14, forbid_wall=True)
     elif kind == "twostep":
         pool = _mask_pool(band_name, 4, 10, forbid_wall=True)
+    elif kind == "bounce":
+        # nu-deathcore displacement groove: mid-density mask with real
+        # off-beat onsets (the riff bounces off the grid, not on it)
+        pool = _mask_pool(
+            band_name, 5, 10, forbid_wall=True,
+            require=lambda m: sum(1 for i, ch in enumerate(m)
+                                  if ch == "X" and i % 2 == 1) >= 2)
     else:  # tremolo/wall
         return "X" * 16
     total = sum(c for _, c in pool)
@@ -78,12 +116,17 @@ def accent_slots(mask):
     return acc
 
 
-BIGRAMS = {}
-for k, v in IDIOM["fret_bigrams"].items():
-    a, b = k.split(">")
-    a, b = int(a), int(b)
-    if 0 <= a <= 8 and 0 <= b <= 8:
-        BIGRAMS.setdefault(a, Counter())[b] = v
+def _build_bigrams(idiom):
+    bg = {}
+    for k, v in idiom["fret_bigrams"].items():
+        a, b = k.split(">")
+        a, b = int(a), int(b)
+        if 0 <= a <= 8 and 0 <= b <= 8:
+            bg.setdefault(a, Counter())[b] = v
+    return bg
+
+
+BIGRAMS = _build_bigrams(IDIOM)
 
 
 def next_fret(rng, cur, allowed):
@@ -156,9 +199,9 @@ class Riff:
         self.string = string
 
     def tab(self):
-        names = ["A#", "F", "A#", "D#", "G", "C"]
+        names = list(STRING_NAMES)
         lines = []
-        for si in range(5, -1, -1):
+        for si in range(len(names) - 1, -1, -1):
             row = names[si].ljust(2) + "|"
             for mask, frets, pinch in self.bars:
                 for i in range(16):
@@ -192,7 +235,8 @@ def validate(riff):
             if run > 4:
                 return False                   # scale-run wandering
     all_vals = [f for _, fr, _ in riff.bars for f in fr.values()]
-    if sum(1 for v in all_vals if v == 0) / max(1, len(all_vals)) < 0.2:
+    if (sum(1 for v in all_vals if v == 0) / max(1, len(all_vals))
+            < OPEN_GRAVITY[DIALECT]):
         return False                           # open-string gravity
     return True
 
@@ -202,6 +246,8 @@ def make_riff(rng, kind, tempo, nbars=4, band=None, max_pcs=4):
     A A' A B (statement + terminal alteration), per corpus weights."""
     band = band or ("breakdown" if tempo <= 150 else
                     "mid" if tempo <= 205 else "blast")
+    if band not in IDIOM["masks"]:              # thin band in this dialect
+        band = max(IDIOM["masks"], key=lambda b: len(IDIOM["masks"][b]))
     for _ in range(200):
         mask = sample_mask(rng, band, kind)
         frets = assign_frets(rng, mask, max_pcs=max_pcs)
@@ -219,6 +265,15 @@ def make_riff(rng, kind, tempo, nbars=4, band=None, max_pcs=4):
         if validate(r):
             return r
     raise RuntimeError(f"no valid riff found for {kind}@{tempo}")
+
+
+def panic_chord(rng):
+    """Knocked Loose-school skronk stab: a tritone double-stop high on the
+    top two strings, meant to ring dissonantly over/against the chug.
+    Returns [(string, fret), ...] on the current tuning."""
+    f = rng.choice([8, 9, 10, 11])
+    hi = len(TUNING) - 1
+    return [(hi - 1, f - 1), (hi, f)]           # tritone cluster
 
 
 def make_tremolo(rng, tempo, nbars=4, string=2, base_fret=3):

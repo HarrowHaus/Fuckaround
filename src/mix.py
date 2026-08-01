@@ -102,14 +102,32 @@ def build_drums(rides=None):
                                      release_ms=60), HighpassFilter(250)]),
               amb) * db(-10.0)
 
-    kick = fx(Pedalboard([
-        HighpassFilter(35),
-        PeakFilter(60, 3.0, 0.8),
-        PeakFilter(400, -4.0, 1.4),
-        PeakFilter(5000 if PROFILE == "raw2007" else 4500,
-                   7.0 if PROFILE == "raw2007" else 5.0, 1.6),
-        Compressor(threshold_db=-18, ratio=4, attack_ms=6, release_ms=80),
-    ]), kick)
+    if PROFILE == "modern2026":
+        # docs/19 Schroeder chain: narrow cut ~100 clears bass/gtr
+        # fundamentals; BROAD 3-6k smack instead of the 2015 typewriter
+        # spike; click is TEMPO-ADAPTIVE — dynamic EQ pulls it down as
+        # kick density piles energy up (fast runs de-click themselves)
+        kick = fx(Pedalboard([
+            HighpassFilter(35),
+            PeakFilter(60, 3.0, 0.8),
+            PeakFilter(102, -3.0, 3.0),
+            PeakFilter(400, -4.0, 1.4),
+            PeakFilter(4200, 4.5, 0.8),
+            Compressor(threshold_db=-18, ratio=4, attack_ms=4,
+                       release_ms=60),
+        ]), kick)
+        kick = dsp.dynamic_eq(kick, 3200, 6500, thresh_db=-24,
+                              max_cut_db=4.0, attack_ms=4, release_ms=140)
+    else:
+        kick = fx(Pedalboard([
+            HighpassFilter(35),
+            PeakFilter(60, 3.0, 0.8),
+            PeakFilter(400, -4.0, 1.4),
+            PeakFilter(5000 if PROFILE == "raw2007" else 4500,
+                       7.0 if PROFILE == "raw2007" else 5.0, 1.6),
+            Compressor(threshold_db=-18, ratio=4, attack_ms=6,
+                       release_ms=80),
+        ]), kick)
     kick = dsp.soft_clip(kick, drive_db=3.0)
 
     snare_dry = fx(Pedalboard([
@@ -217,6 +235,15 @@ def build_guitars(gtr_ride=None):
             PeakFilter(4000, -3.0, 6.0),
             PeakFilter(2800, -1.0, 1.5),
         ])
+    elif PROFILE == "modern2026":
+        # drop-G law (docs/19): guitars surrender the sub entirely —
+        # bus HPF way up, the synth sub owns <100; broad V30 bite kept
+        post = Pedalboard([
+            HighpassFilter(140), LowpassFilter(10500),
+            PeakFilter(300, -1.5, 1.1),
+            PeakFilter(4000, -3.0, 5.0),
+            PeakFilter(2800, -1.0, 1.5),       # vocal pocket prep
+        ])
     else:
         post = Pedalboard([
             HighpassFilter(90), LowpassFilter(10000),
@@ -297,12 +324,35 @@ def build_bass(kick_key):
     hi = fx(Pedalboard([PeakFilter(400, -2.0, 1.4), PeakFilter(1100, 2.0, 1.2),
                         Compressor(threshold_db=-20, ratio=4, attack_ms=10,
                                    release_ms=80)]), hi)
-    bass = lo + hi * db(-4.0)
+    if PROFILE == "modern2026":
+        # docs/19 drop-G architecture: the REAL bass is pure grind gluing
+        # guitars to drums (HPF'd hard); the synth sub layer owns the
+        # fundamentals. Grind band leads, low band nearly gone.
+        hi = fx(Pedalboard([HighpassFilter(250)]), hi)
+        bass = hi + lo * db(-10.0)
+    else:
+        bass = lo + hi * db(-4.0)
     k = dsp.pad_to(kick_key, n)
     bass = dsp.sc_duck(bass, k, amount_db=2.5, thresh_db=-24,
                        attack_ms=2, release_ms=45, band=(20, 110))
     bass = dsp.mono_below(bass, 120)
     return bass
+
+
+def build_subbass(kick_key):
+    """The synth sub bus (modern2026): saturated root-tracking sine.
+    Kick owns the transient; the sub owns the note (ownership first,
+    sidechain second — docs/19)."""
+    x = stem("subbass")
+    if x is None:
+        return None
+    x = fx(Pedalboard([LowpassFilter(150)]), x)
+    x = dsp.soft_clip(x, drive_db=4.0)          # 2nd/3rd harmonics 60-120 Hz
+    k = dsp.pad_to(kick_key, x.shape[1])
+    x = dsp.sc_duck(x, k, amount_db=4.0, thresh_db=-24,
+                    attack_ms=2, release_ms=80)
+    x = dsp.mono_below(x, 400)
+    return x
 
 
 # ------------------------------------------------------------------ orchestra
@@ -345,6 +395,12 @@ RIDE_PLAN = {
         gtr_up=["final"],
         plate_up=["sludge", "final"],
         drops=["bounce", "final"]),
+    "curb_gospel": dict(
+        cym_tame=["blastverse"],
+        smash_up=["frontbreak", "finalbreak"],
+        gtr_up=["finalbreak"],
+        plate_up=["frontbreak", "finalbreak"],
+        drops=["frontbreak", "finalbreak"]),
 }
 
 
@@ -389,6 +445,7 @@ def main():
     orch = build_orchestra(kick_key)
     subs = stem("subdrops")
     fxs = stem("fx")
+    subbass = build_subbass(kick_key)
 
     # normalize each bus to a common active-RMS reference so the static gain
     # structure below is meaningful regardless of amp-capture output levels
@@ -439,6 +496,9 @@ def main():
         low_gains.append((subs, -2.0))
     if fxs is not None:
         low_gains.append((fxs, -6.0))
+    if subbass is not None:
+        subbass = dsp.norm_active(subbass, -16.0)
+        low_gains.append((subbass, -3.0))
     if low_gains:
         n = max([mixbus.shape[1]] + [x.shape[1] for x, _ in low_gains])
         mixbus = dsp.pad_to(mixbus, n)
@@ -453,7 +513,23 @@ def main():
     dsp.save(os.path.join(MIX, songmod.title() + "_vocal_ready.wav"), mixbus)
 
     # --------- mastering
-    if PROFILE == "raw2007":
+    if PROFILE == "modern2026":
+        # docs/19: modern master tilt — controlled lows (mono'd), broad
+        # presence, side-band sheen via M/S high shelf
+        m = fx(Pedalboard([
+            HighpassFilter(30),
+            LowShelfFilter(80, 1.0),
+            PeakFilter(350, -1.2, 1.1),
+            PeakFilter(3000, 1.2, 1.0),
+            HighShelfFilter(8500, 2.0),
+        ]), mixbus)
+        mid = (m[0] + m[1]) * 0.5
+        side = (m[0] - m[1]) * 0.5
+        side = fx(Pedalboard([HighShelfFilter(6000, 1.5)]),
+                  np.vstack([side, side]))[0]
+        m = np.vstack([mid + side, mid - side])
+        m = dsp.mono_below(m, 100)
+    elif PROFILE == "raw2007":
         m = fx(Pedalboard([
             HighpassFilter(32), LowpassFilter(16000),
             LowShelfFilter(100, 0.4),
@@ -480,14 +556,19 @@ def main():
     lo = fx(Pedalboard([Compressor(threshold_db=-24, ratio=2.0, attack_ms=25,
                                    release_ms=180)]), lo)
     # clip highs only: clipping sub sines squares them off and creates huge
-    # intersample overshoot that no sample-peak limiter can catch
-    m = lo + dsp.soft_clip(hi, drive_db=3.0)
+    # intersample overshoot that no sample-peak limiter can catch.
+    # modern2026 = clipper-first chain (docs/19): the clipper does the
+    # loudness work so the limiter only catches 1-2 dB
+    m = lo + dsp.soft_clip(hi, drive_db=4.5 if PROFILE == "modern2026"
+                           else 3.0)
 
     # push into target loudness with clip+limit iterations, converging LUFS
     # and true peak TOGETHER (sub-heavy material creates intersample peaks
     # the sample-peak limiter can't see; correcting TP outside the loop
     # would leave the master quiet)
-    target = -8.0
+    # loudness fashion is profile-dependent: DR3-5 / ~-6 LUFS is the
+    # documented 2025-26 flagship reality (docs/19); earlier eras sit at -8
+    target = -6.2 if PROFILE == "modern2026" else -8.0
     for _ in range(6):
         cur = dsp.lufs(m)
         m = m * db(min(6.0, target - cur))

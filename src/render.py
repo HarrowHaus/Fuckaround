@@ -173,7 +173,10 @@ def write_all_midis():
     write_guitar_midi(score, "gtr_l", f"{MIDI_DIR}/gtr_l.mid")
     write_guitar_midi(score, "gtr_r", f"{MIDI_DIR}/gtr_r.mid")
     write_guitar_midi(score, "lead", f"{MIDI_DIR}/lead.mid")
-    write_guitar_midi(score, "clean", f"{MIDI_DIR}/clean.mid")
+    if "clean" in score.tracks:
+        write_guitar_midi(score, "clean", f"{MIDI_DIR}/clean.mid")
+    elif os.path.exists(f"{MIDI_DIR}/clean.mid"):
+        os.remove(f"{MIDI_DIR}/clean.mid")     # stale from another song
     # bass lib maps at written pitch (verified: key 44 sounds G#1 52 Hz),
     # so transpose +12 to sound in unison with the guitars' low register.
     # Lead-bass songs (darkblack_keysw) get articulation keyswitches too.
@@ -327,12 +330,20 @@ def main(stage="all"):
             nam_process(di, amped, nam, in_gain_db=gin)
             cab_ir(amped, f"{STEMS}/{name}.wav", irs)
 
-        # clean guitar: DI -> JSX crunch at low input (edge of breakup)
-        di = f"{STEMS}/clean_di.wav"
-        render_sfz(GTX, f"{MIDI_DIR}/clean.mid", di)
-        gain_stage(di, di, -16.0)
-        nam_process(di, f"{STEMS}/clean_amp.wav", NAM_CRUNCH)
-        cab_ir(f"{STEMS}/clean_amp.wav", f"{STEMS}/clean.wav", [(IR_421, 0.0)])
+        # clean guitar: DI -> JSX crunch at low input (edge of breakup);
+        # songs with no clean track (song5+) skip and clear stale stems
+        if os.path.exists(f"{MIDI_DIR}/clean.mid"):
+            di = f"{STEMS}/clean_di.wav"
+            render_sfz(GTX, f"{MIDI_DIR}/clean.mid", di)
+            gain_stage(di, di, -16.0)
+            nam_process(di, f"{STEMS}/clean_amp.wav", NAM_CRUNCH)
+            cab_ir(f"{STEMS}/clean_amp.wav", f"{STEMS}/clean.wav",
+                   [(IR_421, 0.0)])
+        else:
+            for st in ("clean_di", "clean_amp", "clean"):
+                p = f"{STEMS}/{st}.wav"
+                if os.path.exists(p):
+                    os.remove(p)
 
     # ---- bass: DI -> split: lows clean / mids dUg grit
     if stage in ("all", "bass"):
@@ -397,6 +408,18 @@ def main(stage="all"):
             seg = x[:, :max(0, n - i0)]
             subs[:, i0:i0 + seg.shape[1]] += seg
         dsp.save(f"{STEMS}/subdrops.wav", subs)
+
+        from synths import sub_note
+        sb = np.zeros((2, n))
+        for note in score.tracks.get("subbass",
+                                     type("E", (), {"notes": []})()).notes:
+            t0s = score.beats_to_seconds(note.start)
+            t1s = score.beats_to_seconds(note.start + note.dur)
+            x = sub_note(note.pitch, max(0.12, t1s - t0s), note.vel)
+            i0 = int(t0s * SR)
+            seg = x[:, :max(0, n - i0)]
+            sb[:, i0:i0 + seg.shape[1]] += seg
+        dsp.save(f"{STEMS}/subbass.wav", sb)
 
         fxb = np.zeros((2, n))
         for note in score.tracks.get("fx",

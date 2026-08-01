@@ -30,6 +30,21 @@ def sub_drop(pitch_midi, dur_s, vel=127, sr=SR):
     return np.vstack([x, x])
 
 
+def sub_note(pitch_midi, dur_s, vel=110, sr=SR):
+    """Sustained synth sub layer (docs/19): sine at the root, saturated so
+    the 2nd/3rd harmonics (60-120 Hz) carry the note on small speakers.
+    This bus OWNS <100 Hz in drop-G productions; the real bass is grind."""
+    n = int(dur_s * sr)
+    t = np.arange(n) / sr
+    f0 = midi_hz(pitch_midi)
+    x = np.sin(2 * np.pi * f0 * t)
+    a = np.minimum(t / 0.012, 1.0) * np.minimum((dur_s - t) / 0.05, 1.0)
+    x = x * np.clip(a, 0, 1) * (vel / 127.0)
+    x = soft_clip(x, drive_db=7.0) * 0.75
+    x = lpf(x, 160, sr)
+    return np.vstack([x, x])
+
+
 def riser(dur_s, sr=SR, to_hz=9000.0):
     """Filtered-noise sweep: HP cutoff climbs, amplitude swells."""
     n = int(dur_s * sr)
