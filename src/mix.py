@@ -498,7 +498,7 @@ def main():
         low_gains.append((fxs, -6.0))
     if subbass is not None:
         subbass = dsp.norm_active(subbass, -16.0)
-        low_gains.append((subbass, -3.0))
+        low_gains.append((subbass, -4.5))
     if low_gains:
         n = max([mixbus.shape[1]] + [x.shape[1] for x, _ in low_gains])
         mixbus = dsp.pad_to(mixbus, n)
@@ -575,8 +575,10 @@ def main():
         mlo, mhi = dsp.butter_split(m, 100)
         mlo = fx(Pedalboard([Compressor(threshold_db=-12, ratio=6.0,
                                         attack_ms=8, release_ms=120)]), mlo)
-        m = mlo + dsp.soft_clip(mhi, drive_db=1.5)
-        m = fx(Pedalboard([Limiter(threshold_db=-1.5, release_ms=60)]), m)
+        m = mlo + dsp.soft_clip(mhi, drive_db=2.5 if PROFILE == "modern2026"
+                                else 1.5)
+        m = fx(Pedalboard([Limiter(threshold_db=-1.2 if PROFILE == "modern2026"
+                                   else -1.5, release_ms=60)]), m)
         tp = dsp.true_peak_db(m)
         if tp > -1.0:
             m = m * db(-1.0 - tp)
