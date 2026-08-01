@@ -46,6 +46,13 @@ local function add_fx(tr, spec)
     log("  param miss '" .. pname .. "' on " .. spec.fx)
     return nil
   end
+  if string.find(spec.fx, "Parametric") and not PEQ_DUMPED then
+    PEQ_DUMPED = true
+    for p = 0, math.min(n - 1, 45) do
+      local _, nm = reaper.TrackFX_GetParamName(tr, fxi, p, "")
+      log("  peq param " .. p .. ": " .. nm)
+    end
+  end
   if spec.params then
     for _, pv in ipairs(spec.params) do set_by_name(pv.name, pv.value) end
   end
@@ -235,3 +242,4 @@ log("saved rpp")
 reaper.Main_OnCommand(42230, 0)   -- render, auto-close render dialog
 log("render complete")
 logf:close()
+reaper.Main_OnCommand(40004, 0)  -- quit (project already saved)

@@ -98,7 +98,7 @@ def active_rms_gain(files, target=-14.0):
 def PEQ(bands, extra=None):
     """bands: list of (idx, type, freq, gain_db, q). type in
     {'bell','hipass','lopass','hishelf','loshelf'}"""
-    d = {"_fx": "LV2: Parametric Equalizer x8 Stereo (LSP LV2)",
+    d = {"_fx": "LSP Parametric Equalizer x8 Stereo",
          "_bands": bands}
     if extra:
         d.update(extra)
@@ -106,14 +106,14 @@ def PEQ(bands, extra=None):
 
 
 def COMP(thr_db, ratio, att_ms, rel_ms, makeup_db=0.0):
-    return {"_fx": "LV2: Compressor Stereo (LSP LV2)",
+    return {"_fx": "LSP Compressor Stereo",
             "Attack time": att_ms, "Release time": rel_ms,
             "Ratio": ratio, "Threshold": 10 ** (thr_db / 20.0),
             "Makeup gain": 10 ** (makeup_db / 20.0)}
 
 
 def LIMIT(thr_db):
-    return {"_fx": "LV2: Limiter Stereo (LSP LV2)",
+    return {"_fx": "LSP Limiter Stereo",
             "Threshold": 10 ** (thr_db / 20.0), "Lookahead": 5.0}
 
 
@@ -128,7 +128,7 @@ def CLIP(drive_db):
 
 
 def PLATE():
-    return {"_fx": "LV2: Dragonfly Plate Reverb (Dragonfly LV2)",
+    return {"_fx": "Dragonfly Plate Reverb",
             "Dry Level": 0.0, "Wet Level": 100.0, "Decay": 1.5,
             "Low Cut": 450.0, "High Cut": 7500.0}
 
@@ -357,9 +357,13 @@ def build():
 def run_reaper(data_path):
     build_lua = os.path.join(os.path.dirname(__file__), "reaper_build.lua")
     env = dict(os.environ, SESSION_DATA=data_path)
-    subprocess.run(["xvfb-run", "-a", REAPER, "-nosplash", build_lua],
-                   env=env, timeout=1200,
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    try:
+        subprocess.run(["xvfb-run", "-a", REAPER, "-nosplash", build_lua],
+                       env=env, timeout=900,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.TimeoutExpired:
+        pass                       # quit can hang; output file is the truth
+    subprocess.run(["pkill", "-f", "reaper_linux"], capture_output=True)
 
 
 def main():
