@@ -114,7 +114,8 @@ def COMP(thr_db, ratio, att_ms, rel_ms, makeup_db=0.0):
 
 def LIMIT(thr_db):
     return {"_fx": "LSP Limiter Stereo",
-            "Threshold": 10 ** (thr_db / 20.0), "Lookahead": 5.0}
+            "Threshold": 10 ** (thr_db / 20.0), "Lookahead": 5.0,
+            "Oversampling": 3, "Gain boost": 0}
 
 
 def JSVOL(vol_db):
@@ -122,9 +123,10 @@ def JSVOL(vol_db):
 
 
 def CLIP(drive_db):
-    # loser/waveShapingDstr: single 'Distortion' percentage-ish param
-    return {"_fx": "JS: loser/waveShapingDstr",
-            "Distort": min(60.0, drive_db * 8.0)}
+    """LSP Clipper: threshold-style soft clip; sigmoid function, dB in raw
+    gain units. drive_db maps to how hard the signal leans on the ceiling."""
+    return {"_fx": "LSP Clipper Stereo",
+            "Clipping threshold": 10 ** (-drive_db / 20.0)}
 
 
 def PLATE():

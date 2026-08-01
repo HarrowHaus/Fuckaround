@@ -67,7 +67,7 @@ local function add_fx(tr, spec)
       set_by_name("Filter type " .. i, tv[ty] or 1)
       set_by_name("Frequency " .. i, fr)
       if gn ~= 0 then set_by_name("Gain " .. i, db2lin(gn)) end
-      if q ~= 0 then set_by_name("Quality " .. i, q) end
+      if q ~= 0 then set_by_name("Quality factor " .. i, q) end
     end
   end
   return fxi
