@@ -106,7 +106,8 @@ def build_drums(rides=None):
         HighpassFilter(35),
         PeakFilter(60, 3.0, 0.8),
         PeakFilter(400, -4.0, 1.4),
-        PeakFilter(4500, 5.0, 1.6),
+        PeakFilter(5000 if PROFILE == "raw2007" else 4500,
+                   7.0 if PROFILE == "raw2007" else 5.0, 1.6),
         Compressor(threshold_db=-18, ratio=4, attack_ms=6, release_ms=80),
     ]), kick)
     kick = dsp.soft_clip(kick, drive_db=3.0)
@@ -155,7 +156,14 @@ def build_drums(rides=None):
         cyms = dsp.ride(cyms, rides["cym"])
 
     shells = kick * db(0.0) + snare_out * db(0.0) + toms * db(-2.0)
-    if PROFILE == "techdeath":
+    if PROFILE == "raw2007":
+        # 2007 garage: one simple smash bus + LOUD room mics
+        smash = fx(Pedalboard([
+            Compressor(threshold_db=-30, ratio=10, attack_ms=2,
+                       release_ms=60),
+        ]), shells)
+        smash = smash * db(-10.0) + room * db(4.0)
+    elif PROFILE == "techdeath":
         # Otero triple parallel: all slow attack / fast release
         compex = fx(Pedalboard([Compressor(threshold_db=-28, ratio=8,
                                            attack_ms=25, release_ms=60)]),
@@ -192,7 +200,15 @@ def build_drums(rides=None):
 def build_guitars(gtr_ride=None):
     l = stem("gtr_l"); r = stem("gtr_r")
     n = max(l.shape[1], r.shape[1])
-    if PROFILE == "techdeath":
+    if PROFILE == "raw2007":
+        # 2007 budget-studio voicing: mid-present bark, less surgical
+        post = Pedalboard([
+            HighpassFilter(70), LowpassFilter(9500),
+            PeakFilter(400, -1.5, 1.0),
+            PeakFilter(900, 1.5, 1.2),
+            PeakFilter(3200, -2.0, 2.0),
+        ])
+    elif PROFILE == "techdeath":
         # Otero voicing: articulation over weight — the 200 Hz pocket is
         # surrendered to bass, top capped at 8k for cymbal identity
         post = Pedalboard([
@@ -211,10 +227,11 @@ def build_guitars(gtr_ride=None):
     l = fx(post, dsp.pad_to(l, n)); r = fx(post, dsp.pad_to(r, n))
     # chug bloom controlled DYNAMICALLY — only compresses 100-230 Hz when a
     # chug actually blooms, instead of a permanent EQ hole
-    l = dsp.dynamic_eq(l, 100, 230, thresh_db=-26, max_cut_db=4.5,
-                       attack_ms=6, release_ms=120)
-    r = dsp.dynamic_eq(r, 100, 230, thresh_db=-26, max_cut_db=4.5,
-                       attack_ms=6, release_ms=120)
+    if PROFILE != "raw2007":
+        l = dsp.dynamic_eq(l, 100, 230, thresh_db=-26, max_cut_db=4.5,
+                           attack_ms=6, release_ms=120)
+        r = dsp.dynamic_eq(r, 100, 230, thresh_db=-26, max_cut_db=4.5,
+                           attack_ms=6, release_ms=120)
     wall = np.zeros((2, n))
     wall[0] += np.mean(l, axis=0)          # hard pan L
     wall[1] += np.mean(r, axis=0)          # hard pan R
@@ -436,7 +453,13 @@ def main():
     dsp.save(os.path.join(MIX, songmod.title() + "_vocal_ready.wav"), mixbus)
 
     # --------- mastering
-    if PROFILE == "techdeath":
+    if PROFILE == "raw2007":
+        m = fx(Pedalboard([
+            HighpassFilter(32), LowpassFilter(16000),
+            LowShelfFilter(100, 0.4),
+            PeakFilter(2500, 1.0, 1.0),
+        ]), mixbus)
+    elif PROFILE == "techdeath":
         # Otero master tilt: brighter/drier than deathcore — articulation
         m = fx(Pedalboard([
             HighpassFilter(28),
