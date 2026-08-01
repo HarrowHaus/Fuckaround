@@ -192,7 +192,13 @@ def write_all_midis():
     write_drum_midi(score, f"{MIDI_DIR}/drums.mid",
                     os.path.join(KIT_DIR, "midimap.xml"))
     for name in ("strings", "strings_stac", "choir"):
-        write_track_midi(score, score.tracks[name], f"{MIDI_DIR}/{name}.mid")
+        if name in score.tracks:
+            write_track_midi(score, score.tracks[name],
+                             f"{MIDI_DIR}/{name}.mid")
+        else:
+            p = f"{MIDI_DIR}/{name}.mid"
+            if os.path.exists(p):
+                os.remove(p)       # stale MIDI from another song
     return score, sec
 
 
@@ -383,7 +389,8 @@ def main(stage="all"):
         end_s = score.beats_to_seconds(score.end_beat()) + 8.0
         n = int(end_s * SR)
         subs = np.zeros((2, n))
-        for note in score.tracks["subdrop"].notes:
+        for note in score.tracks.get("subdrop",
+                                     type("E", (), {"notes": []})()).notes:
             t = score.beats_to_seconds(note.start)
             x = sub_drop(note.pitch + 12, 2.2, note.vel)   # pitch: G#1/F#1 fund.
             i0 = int(t * SR)
@@ -392,7 +399,8 @@ def main(stage="all"):
         dsp.save(f"{STEMS}/subdrops.wav", subs)
 
         fxb = np.zeros((2, n))
-        for note in score.tracks["fx"].notes:
+        for note in score.tracks.get("fx",
+                                     type("E", (), {"notes": []})()).notes:
             t0 = score.beats_to_seconds(note.start)
             t1 = score.beats_to_seconds(note.start + note.dur)
             i0 = int(t0 * SR)
