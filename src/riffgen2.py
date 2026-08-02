@@ -15,6 +15,7 @@ The corpus is used ONLY as constraints and fitness, never as material:
    section's role targets. One seed motif becomes the whole song.
 """
 
+import json
 import math
 import random
 from collections import Counter
@@ -32,6 +33,44 @@ PEDAL_TARGET = sum(v for k, v in _bg.items()
                    if k.split(">")[0] == k.split(">")[1]) / _tot
 
 CORPUS_MASKS = {band: set(d.keys()) for band, d in IDIOM["masks"].items()}
+
+
+def set_reference(path):
+    """REFERENCE LOCK: swap priors/targets/bigrams to the user's chosen
+    songs (corpus/refs.json 'merged' tables). Novelty still rejects
+    anything found in the FULL corpus (including the refs themselves) —
+    anchor to their laws, never copy their bars."""
+    global IDIOM, OPEN_TARGET, PEDAL_TARGET, BIGRAMS
+    refs = json.load(open(path))["merged"]
+    # merge ref masks across bands (ref tabs are often half-time notated,
+    # so tempo bands mislead — density does the role work instead)
+    allmasks = {}
+    for b, mm in refs["masks"].items():
+        for m, c in mm.items():
+            allmasks[m] = allmasks.get(m, 0) + c
+    IDIOM = dict(masks={"breakdown": allmasks, "mid": allmasks,
+                        "blast": allmasks},
+                 fret_bigrams=refs["fret_bigrams"])
+    bg = refs["fret_bigrams"]
+    tot = sum(bg.values()) or 1
+    OPEN_TARGET = sum(v for k, v in bg.items() if k.startswith("0>")) / tot
+    PEDAL_TARGET = sum(v for k, v in bg.items()
+                       if k.split(">")[0] == k.split(">")[1]) / tot
+    BIGRAMS = _build_ref_bigrams(bg)
+    # novelty pool: full corpus + the refs (never copy either)
+    for m in allmasks:
+        for band in CORPUS_MASKS:
+            CORPUS_MASKS.setdefault(band, set()).add(m)
+
+
+def _build_ref_bigrams(bg):
+    out = {}
+    for k, v in bg.items():
+        a, b = k.split(">")
+        a, b = int(a), int(b)
+        if 0 <= a <= 8 and 0 <= b <= 8:
+            out.setdefault(a, Counter())[b] = v
+    return out
 
 
 def _band_priors(band):

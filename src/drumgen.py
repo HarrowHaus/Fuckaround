@@ -35,9 +35,15 @@ def _coverage(kick, riff):
 
 
 class DrumBook:
-    def __init__(self):
+    def __init__(self, source="corpus"):
+        """source='refs' loads only the user-locked reference songs'
+        patterns (corpus/refs.json merged_drums)."""
+        book = BOOK["patterns"]
+        if source == "refs":
+            p = os.path.join(REPO, "corpus", "refs.json")
+            book = json.load(open(p))["merged_drums"]
         self.bands = {}
-        for band, pats in BOOK["patterns"].items():
+        for band, pats in book.items():
             rows = []
             for key, count in pats.items():
                 kick, snare, cym, cmask = json.loads(key)
@@ -51,11 +57,13 @@ class DrumBook:
              couple=True, k=1):
         """Sample k bar patterns. couple=True scores kick-riff agreement
         per the mined coupling law."""
-        rows = [r for r in self.bands.get(band, [])
+        pool = (sum(self.bands.values(), []) if band == "*"
+                else self.bands.get(band, []))
+        rows = [r for r in pool
                 if kick_lo <= r["kd"] <= kick_hi
                 and (not need_snare or "X" in r["snare"])]
         if not rows:
-            rows = self.bands.get(band, [])[:20]
+            rows = pool[:20] if pool else sum(self.bands.values(), [])[:20]
         scored = []
         for r in rows:
             w = r["count"] ** 0.5
