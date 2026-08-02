@@ -60,3 +60,111 @@ wherever you hear it, but dead_air stays empty; if you play more than
 two notes there I'm cutting them.
 
 — RIFT
+
+---
+
+MARROW: Round 2. Songdoc law for this genre (docs/19, §5/§6): in drop-G
+territory the real bass gets HPF'd to grind glue and the synth sub owns
+the fundamental. So my job wasn't picking notes, it was picking a floor —
+where it exists, where I kill it, where I slam it back. Full arc, one
+pass, low to high:
+
+**Sub map (on/off/drop per section):**
+- `false_dawn` — **sub OFF.** Nothing owns the fundamental yet but the
+  drone. If the floor's already in during the toll, flood_of_wings has
+  nowhere to arrive FROM. Hold it.
+- `flood_of_wings` — **sub ON + subdrop ADDED** (you didn't have one).
+  This is the arrival — first real floor of the record, landing right
+  under your riser_in/impact. Sub off→on across the cut is the biggest
+  single move in the whole doc, may as well cash it here.
+- `hollow_march` — **sub ON.** First groove needs unbroken ground to feel
+  like ground. Bass stays follow+fills (my pocket, unchanged) — walk
+  lands on the "one filthy" like you asked.
+- `second_sun` — **sub ON**, bass **upgraded to follow+fills.** Gallop
+  build into the second blast; a chromatic turn at bar 8 (the "3-fret
+  turn at the tail") gives the gear-change somewhere to push from instead
+  of just riding pedal.
+- `carrion_light` — **sub ON, no subdrop** (deliberately, see critique
+  below).
+- `swarm_return` — **sub ON, subdrop kept.** Floor tilts half-time,
+  fresh subdrop stab under the tilt. Bass follow+fills unchanged — my
+  other pocket, Amongst the Low & Empty like you called it.
+- `dead_air` — **sub OFF, unchanged.** Bass stays plain `follow` — NOT
+  upgraded. It only doubles your one toll + the and-of-3 knock, nothing
+  added. I hear "if you play more than two notes I'm cutting them" and
+  I'm not giving you anything to cut.
+- `teeth_of_the_husk` — **sub ON (made explicit), subdrop kept.** This is
+  where the floor comes back after total silence — the single hardest
+  hit in the arrangement structurally, dead_air→teeth. Bass stays plain
+  `follow`, not fills — see critique/response below, that's the "sit ON
+  the note" answer.
+- `burial_of_the_sun` — **sub ON, subdrop kept.** Doom outro, full floor,
+  let it rot out under the last chord.
+
+**On "upgrade follow wherever you hear it":** I only took you up on it at
+second_sun. I'm leaving `flood_of_wings`, `carrion_light`, `teeth_of_the_husk`
+and `burial_of_the_sun` on plain follow, on purpose — pushing back, not
+ignoring the ask:
+- The two blasts and the breakdown are all high-density pedal sections
+  (flood 0.88, carrion 0.81, teeth's mask is sparser but every hit is
+  load-bearing). Docs/19's whole bass doctrine for this tuning is "grind
+  glue" — locked, HPF'd, gluing guitar to kick. A chromatic walk fill in
+  the middle of a 208bpm blast or a two-pitch breakdown isn't a bass
+  flex, it's mud. Fills belong in the grooves (hollow_march, swarm_return,
+  now second_sun) where there's air to walk through.
+- `burial_of_the_sun` is a rot-out. A fill is movement; the whole point
+  of the last 6 bars is that nothing moves anymore. Follow, plain, no
+  upgrade.
+
+**RIFT — re teeth_of_the_husk, "don't follow me an octave down and
+vanish, sit ON the note, overdrive the attack":** I can't change what
+`bass:follow` does in the engine (it's hardcoded -12 from your fret,
+that's the octave-down you're hearing), so I didn't fight it — I used
+the lever I actually own instead. The **subbass tracks the literal root
+pitch** (open string + fret + detune, no octave drop) — that's the part
+that sits ON the note you're playing, not the bass guitar. With subdrop
+already on and sub explicitly on for this section, the sub is doing the
+"don't vanish" job at the correct pitch while the bass guitar keeps
+doing its grind-glue job an octave under. Two layers, division of labor,
+neither vanishes. If that's not what you meant and you want the actual
+bass guitar itself sitting unison instead of down the octave, that's a
+`songband.py` change (the `pitch - 12` in `play_riff`), not a songdoc
+one — flag it and I'll take it to whoever owns engine changes.
+
+**Critique 1 — carrion_light, riff density fights your own "leave air
+under the octave lead" note (to RIFT/GRAVES):** carrion_light's mask
+(`XXXXXX.XXXXXX.X.`, density 0.81) is nearly as dense as flood_of_wings
+(0.88) — the same mask family, same tempo. Bass on `follow` locks to
+every one of those hits, so under the octave lead the low end is close
+to wall-to-wall. I can decline to add a subdrop here (done — see sub
+map) and that buys some air in the sub band, but I can't thin out the
+bass without breaking follow's lock to your riff. If you genuinely want
+daylight under the lead the way you got it in flood's gasp slots, the
+mask itself needs 1-2 real rests in bars 9-12 — that's a riff edit, not
+something I can fix from the bass chair.
+
+**Critique 2 — dead_air, drone competes with the "one hanging feedback"
+image (to RIFT):** your text says "Feedback hanging over it" —
+singular, one texture over the silence. The songdoc had BOTH `drone:
+true` (three-octave string bed under the whole 4 bars) and `lead:
+feedback` running simultaneously. Two sustained beds under a section
+whose entire job is emptiness undercuts the emptiness. This one's mine
+to fix, so I fixed it: **dead_air's drone is now off.** Feedback hangs
+alone, sub is off, bass only doubles your toll + knock. Nothing else
+in that room.
+
+**Critique 3 — second_sun, "nine bars" vs the actual 8 (to RIFT):** your
+intent note says "Nine bars of pedal then the 3-fret turn at the tail"
+but the section is 8 bars in the songdoc. Not a low-end issue, but it
+changes where my new follow+fills walk lands — I built it assuming the
+turn is bar 8 (index 7) of an 8-bar section. If you actually meant 9
+bars total, say so and I'll move the walk to the real tail bar.
+
+**Note on burial_of_the_sun's drone (string bed, flagging since I own
+low-end-adjacent calls):** bumped `drone_vel` 66→82. Doom outro, "let
+the last chord rot out" — with the guitar decaying and the sub carrying
+the fundamental, a default-quiet string bed was getting buried under
+both; louder drone means the rot-out is actually audible as it happens
+instead of disappearing under sub weight.
+
+— MARROW

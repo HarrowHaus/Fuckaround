@@ -15,7 +15,8 @@
       "drums": {"mode": "book"},
       "bass": "follow",
       "lead": "feedback",
-      "drone": true
+      "drone": true,
+      "sub": false
     },
     {
       "name": "flood_of_wings",
@@ -31,7 +32,9 @@
       "bass": "follow",
       "lead": "trem:5",
       "riser_in": true,
-      "impact": true
+      "impact": true,
+      "sub": true,
+      "subdrop": true
     },
     {
       "name": "hollow_march",
@@ -45,7 +48,8 @@
       "drums": {"mode": "book"},
       "bass": "follow+fills",
       "lead": "none",
-      "pinch": [3, 7]
+      "pinch": [3, 7],
+      "sub": true
     },
     {
       "name": "second_sun",
@@ -58,8 +62,9 @@
         "vel": 110
       },
       "drums": {"mode": "book"},
-      "bass": "follow",
-      "lead": "none"
+      "bass": "follow+fills",
+      "lead": "none",
+      "sub": true
     },
     {
       "name": "carrion_light",
@@ -74,7 +79,8 @@
       "drums": {"mode": "book"},
       "bass": "follow",
       "lead": "octave",
-      "impact": true
+      "impact": true,
+      "sub": true
     },
     {
       "name": "swarm_return",
@@ -89,7 +95,8 @@
       "bass": "follow+fills",
       "lead": "none",
       "skronk": [2],
-      "subdrop": true
+      "subdrop": true,
+      "sub": true
     },
     {
       "name": "dead_air",
@@ -104,7 +111,7 @@
       "drums": {"mode": "book"},
       "bass": "follow",
       "lead": "feedback",
-      "drone": true,
+      "drone": false,
       "sub": false
     },
     {
@@ -123,7 +130,8 @@
       "riser_in": true,
       "subdrop": true,
       "impact": true,
-      "pinch": [7]
+      "pinch": [7],
+      "sub": true
     },
     {
       "name": "burial_of_the_sun",
@@ -140,7 +148,9 @@
       "bass": "follow",
       "lead": "feedback",
       "drone": true,
-      "subdrop": true
+      "drone_vel": 82,
+      "subdrop": true,
+      "sub": true
     }
   ]
 }
