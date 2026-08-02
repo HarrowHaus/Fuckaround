@@ -584,23 +584,33 @@ def main():
     # the sample-peak limiter can't see; correcting TP outside the loop
     # would leave the master quiet)
     # loudness fashion is profile-dependent: DR3-5 / ~-6 LUFS is the
-    # documented 2025-26 flagship reality (docs/19); earlier eras sit at -8
+    # documented 2025-26 flagship reality (docs/19); earlier eras sit at -8.
+    # NON-CUMULATIVE convergence: every candidate starts from the pristine
+    # pre-loop master with a scalar drive — the dynamics chain is applied
+    # exactly once per pass (the old loop re-compressed the low band each
+    # iteration and crushed the sub on hard-to-converge material)
     target = -6.2 if PROFILE == "modern2026" else -8.0
-    for _ in range(12 if PROFILE == "modern2026" else 6):
-        cur = dsp.lufs(m)
-        m = m * db(min(6.0, target - cur))
-        mlo, mhi = dsp.butter_split(m, 100)
+    m0 = m.copy()
+    g = min(6.0, target - dsp.lufs(m0))
+    for _ in range(8):
+        cand = m0 * db(g)
+        mlo, mhi = dsp.butter_split(cand, 100)
         mlo = fx(Pedalboard([Compressor(threshold_db=-12, ratio=6.0,
                                         attack_ms=8, release_ms=120)]), mlo)
-        m = mlo + dsp.soft_clip(mhi, drive_db=2.5 if PROFILE == "modern2026"
-                                else 1.5)
-        m = fx(Pedalboard([Limiter(threshold_db=-1.2 if PROFILE == "modern2026"
-                                   else -1.5, release_ms=60)]), m)
-        tp = dsp.true_peak_db(m)
+        cand = mlo + dsp.soft_clip(mhi,
+                                   drive_db=2.5 if PROFILE == "modern2026"
+                                   else 1.5)
+        cand = fx(Pedalboard([Limiter(
+            threshold_db=-1.2 if PROFILE == "modern2026" else -1.5,
+            release_ms=60)]), cand)
+        tp = dsp.true_peak_db(cand)
         if tp > -1.0:
-            m = m * db(-1.0 - tp)
-        if abs(dsp.lufs(m) - target) < 0.4 and dsp.true_peak_db(m) <= -0.95:
+            cand = cand * db(-1.0 - tp)
+        m = cand
+        cur = dsp.lufs(m)
+        if abs(cur - target) < 0.4 and dsp.true_peak_db(m) <= -0.95:
             break
+        g += (target - cur)
 
     dsp.save(os.path.join(MIX, MASTER_NAME + ".wav"), m)
 
