@@ -45,6 +45,9 @@
       "bass": "follow",
       "lead": "riffsweep",
       "lead_start_bar": 6,
+      "lead2": "leadriff",
+      "lead2_start_bar": 0,
+      "lead2_end_bar": 6,
       "impact": true,
       "subdrop": true,
       "sub": true
@@ -83,6 +86,15 @@
         "vel": 122,
         "ring": true
       },
+      "phrase": ["A", "A", "A", "B", "A", "A", "A", "B"],
+      "phrase_riffs": {
+        "B": {
+          "mask": "X......X.......X",
+          "frets": {"0": 0, "7": 0, "15": 1},
+          "vel": 122,
+          "ring": true
+        }
+      },
       "riff_burst": true,
       "drums": {
         "mode": "bars",
@@ -93,6 +105,7 @@
         "vel": 122
       },
       "bass": "follow",
+      "pinch": [3, 7],
       "impact": true,
       "subdrop": true,
       "sub": true
