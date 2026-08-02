@@ -1,0 +1,29 @@
+all_light_is_carrion — REAPER project notes
+============================================================
+
+DRUMS track — MIDI pitch map (mostly standard GM drum-map numbers):
+  35  kick (rim/alt)        42  closed hihat        51  ride
+  36  kick                  43  floor tom            52  china
+  38  snare                 47  tom (low-mid)         57  crash 2
+  47  tom (low-mid)         48  tom (hi-mid)          59  ride bell
+  49  crash 1               50  crash-1 CHOKE*        58  crash-2 CHOKE*
+  * 50 and 58 are choke/stop triggers (cymbal muted immediately), not
+    separate acoustic instruments — GM calls these High Tom / Vibraslap,
+    so remap or ignore them if your drum VST doesn't support chokes.
+Everything else lines up with plain GM (kick/snare/hihat/toms/crash/ride),
+so most drum VSTs (EZdrummer included) should read this sensibly with
+little or no remapping.
+
+GTR/LEAD tracks carry the real performance notes plus a handful of very
+low "keyswitch" notes (pitch 5-29) — these trigger articulation switches
+(palm mute, technique) on our own sample library and are meaningless to
+most guitar VSTs/amp sims. They're easy to spot in the piano roll (they
+sit far below the lowest played note) — mute or delete that lane if your
+plugin doesn't use keyswitches, or remap them if it does.
+
+BASS track is at its true composed pitch (no transpose applied) — should
+read correctly in EZbass or any standard bass VST/amp sim out of the box.
+
+SUB SYNTH / SUB DROP / FX TRIGGERS are one-shot/sustained hit markers for
+a synth (Odin 3, etc.) rather than a "played" part — treat as trigger
+points to design a sound around, not a melodic line.

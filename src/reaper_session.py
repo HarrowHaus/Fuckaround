@@ -33,14 +33,22 @@ import songmod
 import render as rnd
 from score import Note
 
-STEMS = os.path.join(REPO, "stems", songmod.title())
-OUTDIR = os.path.join(REPO, "reaper")
-MIXDIR = os.path.join(REPO, "mix")
+SONGDIR = os.path.join(REPO, "songs", songmod.title())
+STEMS = os.path.join(SONGDIR, "stems")
+OUTDIR = os.path.join(SONGDIR, "reaper")
+MIXDIR = SONGDIR
 RPP = os.path.join(OUTDIR, songmod.title() + ".rpp")
 
 
 def lua_quote(s):
     return '"' + str(s).replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def stem_path(name):
+    """Songs migrated to songs/<slug>/stems/ carry FLAC (re-encoded to
+    save space); freshly rendered songs still have the original WAV."""
+    flac = os.path.join(STEMS, name + ".flac")
+    return flac if os.path.exists(flac) else os.path.join(STEMS, name + ".wav")
 
 
 def note_events(score, track, transpose=0, keyswitches=False):
@@ -166,8 +174,10 @@ def build():
     ]
 
     # ---- drum mic items -> bus children
-    dg = {os.path.basename(f)[2:-4].lower(): f
-          for f in glob.glob(os.path.join(STEMS, "drums", "dg*.wav"))}
+    dg = {}
+    for pat in ("dg*.wav", "dg*.flac"):
+        for f in glob.glob(os.path.join(STEMS, "drums", pat)):
+            dg[os.path.basename(f).split(".")[0][2:].lower()] = f
 
     def picks(*keys, exclude=()):
         out = []
@@ -213,36 +223,36 @@ def build():
 
     # ---- bus gain staging (reproduce mix.py norm_active offsets)
     g_drums = active_rms_gain(list(dg.values()))
-    g_gtr = active_rms_gain([os.path.join(STEMS, "gtr_l.wav"),
-                             os.path.join(STEMS, "gtr_r.wav")])
-    g_bass = active_rms_gain([os.path.join(STEMS, "bass_lo.wav"),
-                              os.path.join(STEMS, "bass_hi.wav")])
-    g_sub = active_rms_gain([os.path.join(STEMS, "subbass.wav")], -16.0)
-    g_lead = active_rms_gain([os.path.join(STEMS, "lead.wav")], -16.0)
+    g_gtr = active_rms_gain([stem_path("gtr_l"),
+                             stem_path("gtr_r")])
+    g_bass = active_rms_gain([stem_path("bass_lo"),
+                              stem_path("bass_hi")])
+    g_sub = active_rms_gain([stem_path("subbass")], -16.0)
+    g_lead = active_rms_gain([stem_path("lead")], -16.0)
 
     audio_buses = [
         ("GTRS", g_gtr - 2.5,
          [PEQ([(0, "hipass", 140, 0, 0.7), (1, "lopass", 10500, 0, 0.7),
                (2, "bell", 300, -1.5, 1.1), (3, "bell", 4000, -3.0, 5.0),
                (4, "bell", 2800, -1.0, 1.5)]), JSVOL(0.0)],
-         [("GTR L", [(os.path.join(STEMS, "gtr_l.wav"), 0.0)], 0.0, [], -1.0),
-          ("GTR R", [(os.path.join(STEMS, "gtr_r.wav"), 0.0)], 0.0, [], 1.0),
-          ("LEAD", [(os.path.join(STEMS, "lead.wav"), 0.0)],
+         [("GTR L", [(stem_path("gtr_l"), 0.0)], 0.0, [], -1.0),
+          ("GTR R", [(stem_path("gtr_r"), 0.0)], 0.0, [], 1.0),
+          ("LEAD", [(stem_path("lead"), 0.0)],
            g_lead - g_gtr + 1.0, [PEQ([(0, "hipass", 160, 0, 0.7),
                                        (1, "lopass", 9000, 0, 0.7)])], 0.0)]),
         ("BASS", g_bass - 5.5,
          [COMP(-20, 4, 10, 80)],
-         [("BASS LO", [(os.path.join(STEMS, "bass_lo.wav"), 0.0)], -10.0,
+         [("BASS LO", [(stem_path("bass_lo"), 0.0)], -10.0,
            [], 0.0),
-          ("BASS GRIND", [(os.path.join(STEMS, "bass_hi.wav"), 0.0)], 0.0,
+          ("BASS GRIND", [(stem_path("bass_hi"), 0.0)], 0.0,
            [PEQ([(0, "hipass", 250, 0, 0.7), (1, "bell", 400, -2.0, 1.4),
                  (2, "bell", 1100, 2.0, 1.2)])], 0.0)]),
         ("LOW", 0.0, [],
-         [("SUBDROPS", [(os.path.join(STEMS, "subdrops.wav"), 0.0)], -8.0,
+         [("SUBDROPS", [(stem_path("subdrops"), 0.0)], -8.0,
            [], 0.0),
-          ("SUB LAYER", [(os.path.join(STEMS, "subbass.wav"), 0.0)],
+          ("SUB LAYER", [(stem_path("subbass"), 0.0)],
            g_sub - 4.5, [CLIP(4.0), PEQ([(0, "lopass", 150, 0, 0.7)])], 0.0),
-          ("FX", [(os.path.join(STEMS, "fx.wav"), 0.0)], -12.0, [], 0.0)]),
+          ("FX", [(stem_path("fx"), 0.0)], -12.0, [], 0.0)]),
     ]
 
     # ---- rides (docs/18: automation-driven dynamics) as JS volume envs
