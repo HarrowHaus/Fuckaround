@@ -48,6 +48,54 @@
       "impact": true,
       "subdrop": true,
       "sub": true
+    },
+    {
+      "name": "the_reckoning",
+      "bars": 8,
+      "bpm": 235,
+      "riff": {
+        "mask": "X.XXX..X..XXX..X",
+        "frets": {"0": 1, "2": 1, "3": 1, "4": 1, "7": 1, "10": 0, "11": 0,
+                  "12": 0, "15": 0},
+        "vel": 118
+      },
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X.XXX..X..XXX..X", "snare": "X.XXX..X..XXX..X",
+           "cym": "ride", "cmask": "X...X...X...X..."}
+        ],
+        "vel": 120
+      },
+      "bass": "follow",
+      "lead": "riffsweep",
+      "lead_start_bar": 6,
+      "impact": true,
+      "sub": true
+    },
+    {
+      "name": "the_dead_reach",
+      "bars": 8,
+      "bpm": 44,
+      "riff": {
+        "mask": "X......X.......X",
+        "frets": {"0": 1, "7": 1, "15": 0},
+        "vel": 122,
+        "ring": true
+      },
+      "riff_burst": true,
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X......X.......X", "snare": "................",
+           "cym": "china", "cmask": "X......X.......X"}
+        ],
+        "vel": 122
+      },
+      "bass": "follow",
+      "impact": true,
+      "subdrop": true,
+      "sub": true
     }
   ]
 }

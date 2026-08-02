@@ -8,6 +8,10 @@ any moment (the 'playthrough' for the singer).
 songdoc schema (per section):
   name, bars, bpm
   riff:  {mask: 16-char 'X./' grid, frets: {slot: fret}, detune, ring}
+         riff_burst: bool — each onset gets a fast 2-note chromatic
+         approach run before it lands (both rhythm guitars, unison).
+         For sparse/ultra-slow riffs: isolated hits still read as
+         technical, not just slow (the 2026 dead-space-breakdown move).
   drums: {mode: 'book'|'bars', prefer_cym, kick_lo, kick_hi, union_riff,
           bars: [{kick, snare, cym, cmask}, ...]}   # bars mode = literal
   lead:  'none' | 'trem:<base_fret>' | 'octave' | 'feedback' | 'techlead'
@@ -94,6 +98,7 @@ class Player:
         self.tabs.append((sec["name"], sec["bpm"],
                           genome_riff(g, sec["bpm"], "sec").tab()))
         vel = r.get("vel", 110)
+        burst = sec.get("riff_burst", False)
         for b in range(int(sec["bars"])):
             base = t0 + b * BAR
             slots = sorted(frets)
@@ -108,6 +113,17 @@ class Player:
                 pitch = midi_of(0, frets[i]) + detune
                 gp = pitch if pitch >= 30 else pitch + 12
                 art = "sus" if (ring or gap > 0.75) else "pm"
+                if burst:
+                    # isolated hit gets a fast chromatic run INTO the
+                    # landing pitch — "insane speed" inside the dead
+                    # space, the 2026-breakdown move (docs/18)
+                    step = min(0.045, gap / 6)
+                    pre = [gp - 5, gp - 2]
+                    tt = t - step * len(pre)
+                    for gpitch in pre:
+                        for tr in (self.gtr_l, self.gtr_r):
+                            tr.add(tt, step * 0.9, gpitch, vel - 12, "fast")
+                        tt += step
                 for tr in (self.gtr_l, self.gtr_r):
                     tr.add(t, dur, gp, vel + (5 if i == 0 else 0), art)
                 if sec.get("bass", "follow").startswith("follow"):
