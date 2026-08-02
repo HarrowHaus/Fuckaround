@@ -1,5 +1,31 @@
 {
   "title": "UNTITLED",
   "slug": "band_song2",
-  "sections": []
+  "sections": [
+    {
+      "name": "the_halving",
+      "bars": 8,
+      "bpm": 96,
+      "riff": {
+        "mask": "XXX.X.XX.XX.X...",
+        "frets": {"0": 1, "1": 1, "2": 1, "4": 1, "6": 1, "7": 0, "9": 0,
+                  "10": 0, "12": 0},
+        "vel": 116
+      },
+      "drums": {
+        "mode": "book",
+        "kick_lo": 6,
+        "kick_hi": 12,
+        "prefer_cym": "china",
+        "need_snare": true,
+        "repeat_of": 2,
+        "vel": 118
+      },
+      "bass": "follow",
+      "lead": "techlead",
+      "impact": true,
+      "subdrop": true,
+      "sub": true
+    }
+  ]
 }

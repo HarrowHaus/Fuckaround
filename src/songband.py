@@ -10,7 +10,12 @@ songdoc schema (per section):
   riff:  {mask: 16-char 'X./' grid, frets: {slot: fret}, detune, ring}
   drums: {mode: 'book'|'bars', prefer_cym, kick_lo, kick_hi, union_riff,
           bars: [{kick, snare, cym, cmask}, ...]}   # bars mode = literal
-  lead:  'none' | 'trem:<base_fret>' | 'octave' | 'feedback'
+  lead:  'none' | 'trem:<base_fret>' | 'octave' | 'feedback' | 'techlead'
+         # techlead: diminished/harmonic-minor shred line, irregular note
+         # groupings per beat (polymetric against the riff), hammer-on/
+         # pull-off legato + one trill/bend flourish per figure. Rooted at
+         # the section's open-string pitch. Archspire-density x Black
+         # Dahlia Murder-contour, never a straight up/down sweep.
   bass:  'follow' | 'follow+fills'
   skronk: [bar indices], pinch: [bar indices]
   subdrop: bool, drone: bool, impact: bool, riser_in: bool
@@ -141,6 +146,57 @@ class Player:
             for i, dr in enumerate(("snare", "tom2", "tom3", "tom_floor")):
                 self.drum(base + i * 0.25, dr, 106 + i * 4)
 
+    def techlead(self, sec, t0, nb):
+        """Archspire-density x Black Dahlia Murder-contour lead: diminished
+        and harmonic-minor figures, ORDERED NON-MONOTONICALLY (skips and
+        direction changes, never a plain one-string-per-fret sweep),
+        grouped in irregular note-counts per beat (5/6/7/4 cycling) so the
+        line runs polymetric against the riff's on-the-grid chugs instead
+        of locking to it. Small intervals get the 'fast' tag -> render.py's
+        keyswitch logic reads that as a real hammer-on/pull-off, so dense
+        runs come out legato (hybrid sweep-legato), not all-picked. One
+        trill or bend flourish closes every other bar."""
+        root = G_LO + sec.get("riff", {}).get("detune", 0) + 24
+        HM = [0, 2, 3, 5, 7, 8, 11]                  # harmonic minor
+        HM2 = HM + [12 + d for d in HM] + [24]
+        FIGURES = [
+            [0, 7, 3, 11, 7, 15, 10, 19, 15, 23],     # broken i7 arp, skips
+            list(reversed(HM2))[:12],                 # HM descent w/ a turn
+            [0, 9, 3, 12, 6, 15, 9, 18, 12, 21],       # symmetric dim leaps
+            [7, 10, 7, 3, 0, -2, 0, 3, 7],             # melodic hook, held
+        ]
+        GROUPS = [5, 6, 7, 4]
+        prev_pitch = None
+        for bar in range(nb):
+            fig = FIGURES[bar % len(FIGURES)]
+            base = t0 + bar * BAR
+            t = base
+            note_i = 0
+            for beat in range(4):
+                g = GROUPS[(bar + beat) % len(GROUPS)]
+                slot = 1.0 / g
+                for k in range(g):
+                    off = fig[note_i % len(fig)]
+                    p = min(79, root + off)
+                    is_flourish = (beat == 3 and k == g - 1
+                                  and note_i == len(fig) - 1)
+                    if is_flourish:
+                        tag = "trill_m3" if bar % 2 == 0 else "bend_wh"
+                        note_len = min(1.6, slot * 3)
+                        vel = 108
+                    elif prev_pitch is not None and abs(p - prev_pitch) <= 4:
+                        tag = "fast"
+                        note_len = slot * 0.95
+                        vel = 96 + (6 if k == 0 else 0)
+                    else:
+                        tag = "sus"
+                        note_len = slot * 0.9
+                        vel = 100 + (6 if k == 0 else 0)
+                    self.lead.add(t, note_len, p, vel, tag)
+                    prev_pitch = p
+                    t += slot
+                    note_i += 1
+
     def play_extras(self, sec, t0):
         nb = int(sec["bars"])
         lead = sec.get("lead", "none")
@@ -171,6 +227,8 @@ class Player:
         elif lead == "feedback":
             self.lead.add(t0 + bars(1), bars(min(2.5, nb - 1)),
                           G_LO + 31, 58, "vib")
+        elif lead == "techlead":
+            self.techlead(sec, t0, nb)
         for b in sec.get("skronk", []):
             for (st, fr) in panic_chord(RNG):
                 p = midi_of(st, fr)
