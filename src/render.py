@@ -184,7 +184,8 @@ def write_all_midis():
     if getattr(songmod.get_song(), "QUAD", False):
         import random as _r
         for src_name, take2 in (("gtr_l", "gtr_l2"), ("gtr_r", "gtr_r2")):
-            rng = _r.Random(hash(take2) & 0xffff)
+            import zlib
+            rng = _r.Random(zlib.crc32(take2.encode()) & 0xffff)
             tr = score.tracks[src_name]
             t2 = type(tr)(take2)
             t2.notes = [Note(max(0.0, n.start + rng.uniform(-0.006, 0.006)),
