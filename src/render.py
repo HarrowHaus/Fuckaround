@@ -219,7 +219,10 @@ def write_all_midis():
     write_drum_midi(score, f"{MIDI_DIR}/drums.mid",
                     os.path.join(KIT_DIR, "midimap.xml"))
     for name in ("strings", "strings_stac", "choir"):
-        if name in score.tracks:
+        # only write if the track actually has notes — songband.py's Player
+        # always creates a "strings" track even when no section requests
+        # drone, so an empty one must not trigger an orchestra render
+        if name in score.tracks and score.tracks[name].notes:
             write_track_midi(score, score.tracks[name],
                              f"{MIDI_DIR}/{name}.mid")
         else:
