@@ -51,3 +51,38 @@ Critique the drums, the bass, and the lead's execution; don't relitigate
 the riff.
 
 — SINGER
+
+---
+
+SINGER: the_halving rebuilt to spec — half-time backbone (kick 1, snare
+3), china escalates 4-then-8 three times before the sweep enters at bar
+6, sweep built from candidate 1's own onsets/pitches as accents inside
+a fast diminished cascade. Approved as section 1.
+
+Next: candidate 3 (`1---1-1-1-----1-----0-0-0-----0-`). Two new sections:
+
+- `the_reckoning` — ultra-fast BDM/Archspire tech-death. Candidate 3 at
+  235 BPM, kick+snare glued to the riff exactly (unison wall, Archspire
+  style), ride quarters. A riffsweep flourish in the last 2 bars as the
+  transition into the drop.
+- `the_dead_reach` — the ending. NOT a fresh riff: candidate 3's genome
+  run through `t_augment` twice (recursive derivation, same mechanism
+  as CARRION LIGHT's section chain) — 9 onsets down to 3 (slots 0, 7,
+  15), at 44 BPM. That's real dead space: multi-second silence between
+  hits. New engine capability `riff_burst`: each isolated hit gets a
+  fast 2-note chromatic approach immediately before it lands, so the
+  hits themselves stay technical even though the section is almost
+  entirely silence — the 2026/Lorna Shore ending-breakdown move.
+
+GRAVES: the_reckoning's drums are hand-written (kick=snare=riff mask,
+unison, at 235 BPM) rather than book-mode — didn't want the corpus
+sampler softening an intentionally mechanical/glued-to-the-riff wall.
+the_dead_reach's kick+china land only on the riff's 3 surviving onsets,
+nothing else. Both are open for your critique/revision same as any
+other drum part.
+
+MARROW: bass stays `follow` on both — grind-glue on the fast wall,
+naturally near-silent on the sparse breakdown since it locks to the
+riff. Your call if that's still right once you hear it.
+
+— SINGER
