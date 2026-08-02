@@ -12,10 +12,24 @@ songdoc schema (per section):
          approach run before it lands (both rhythm guitars, unison).
          For sparse/ultra-slow riffs: isolated hits still read as
          technical, not just slow (the 2026 dead-space-breakdown move).
+
+  PHRASE STRUCTURE (docs/24 — mined 98 real multi-bar breakdown runs from
+  the reference songs: the dominant macro-shape is AAAB — three bars of
+  one pattern, one bar of a contrasting "turn" — chained repeatedly, or
+  ABAC (alternating call/response where the response itself varies). A
+  single mask repeated for every bar, unmodified, is the degenerate case
+  (phrase=["A"], the default) — use the real shape for anything longer
+  than ~4 bars:
+    phrase: list of letters, e.g. ["A","A","A","B","A","A","A","B"],
+            cycled across the section's bars (default ["A"])
+    phrase_riffs: {letter: riff-dict} for letters other than "A" — "A"
+            always falls back to the section's own `riff` field, so you
+            only need to add the turn/response patterns here.
+
   drums: {mode: 'book'|'bars', prefer_cym, kick_lo, kick_hi, union_riff,
           bars: [{kick, snare, cym, cmask}, ...]}   # bars mode = literal
   lead:  'none' | 'trem:<base_fret>' | 'octave' | 'feedback' | 'techlead'
-         | 'riffsweep'
+         | 'riffsweep' | 'leadriff'
          # techlead: diminished/harmonic-minor shred line, irregular note
          # groupings per beat (polymetric against the riff), hammer-on/
          # pull-off legato + one trill/bend flourish per figure. Rooted at
@@ -26,8 +40,16 @@ songdoc schema (per section):
          # their original relative positions, connected by fast diminished-
          # arpeggio fill notes (legato-tagged) so the riff is audible
          # inside the cascade. Each bar sequences up a minor third.
-  lead_start_bar: int, bars into the section before the lead enters
-                  (default 0). Rhythm/drums/bass play from bar 0 either way.
+         # leadriff: a LEAD RIFF, not a free line — doubles the rhythm
+         # chugs bar-for-bar (phrase-aware: follows the same A/B pattern
+         # as the rhythm guitars), harmonizing each hit a minor third
+         # above on 'A' bars and a tritone above on the answering bar,
+         # with the SAME articulation (pm/sus) as the chug it doubles.
+         # This is "based around the underlying rhythm," not over it.
+  lead_start_bar / lead_end_bar: int, bar range for `lead` (default the
+         whole section). lead2 / lead2_start_bar / lead2_end_bar: an
+         independent second lead layer over a different bar range (e.g.
+         leadriff under the groove, riffsweep taking over for the drop).
   bass:  'follow' | 'follow+fills'
   skronk: [bar indices], pinch: [bar indices]
   subdrop: bool, drone: bool, impact: bool, riser_in: bool
@@ -85,21 +107,37 @@ class Player:
         self.drums.notes.append(Note(t, dur, 0, vel,
                                      frozenset({name, "grid"})))
 
-    def play_riff(self, sec, t0):
-        r = sec.get("riff")
-        if not r:
-            return
-        mask = r["mask"]
+    def _phrase_letter(self, sec, b):
+        phrase = sec.get("phrase", ["A"])
+        return phrase[b % len(phrase)]
+
+    def _bar_riff(self, sec, b):
+        """Resolve (mask, frets, detune, ring, vel) for bar b, honoring an
+        optional call/response phrase (AAAB/ABAC — docs/24). 'A' always
+        falls back to the section's own `riff`."""
+        letter = self._phrase_letter(sec, b)
+        variants = sec.get("phrase_riffs")
+        r = (variants.get(letter) if variants else None) or sec["riff"]
         frets = {int(k): v for k, v in r["frets"].items()}
-        detune = r.get("detune", 0)
-        ring = r.get("ring", False)
-        g = r2.Genome(mask, frets)
+        return (r["mask"], frets, r.get("detune", 0), r.get("ring", False),
+               r.get("vel", 110))
+
+    def play_riff(self, sec, t0):
+        if not sec.get("riff"):
+            return
         from riffgen2 import genome_riff
-        self.tabs.append((sec["name"], sec["bpm"],
-                          genome_riff(g, sec["bpm"], "sec").tab()))
-        vel = r.get("vel", 110)
+        letters_used = sorted(set(self._phrase_letter(sec, b)
+                                  for b in range(int(sec["bars"]))))
+        for letter in letters_used:
+            mask, frets, _, _, _ = self._bar_riff(
+                sec, next(b for b in range(int(sec["bars"]))
+                         if self._phrase_letter(sec, b) == letter))
+            g = r2.Genome(mask, frets)
+            self.tabs.append((f"{sec['name']} [{letter}]", sec["bpm"],
+                              genome_riff(g, sec["bpm"], "sec").tab()))
         burst = sec.get("riff_burst", False)
         for b in range(int(sec["bars"])):
+            mask, frets, detune, ring, vel = self._bar_riff(sec, b)
             base = t0 + b * BAR
             slots = sorted(frets)
             if slots:
@@ -170,7 +208,7 @@ class Player:
             for i, dr in enumerate(("snare", "tom2", "tom3", "tom_floor")):
                 self.drum(base + i * 0.25, dr, 106 + i * 4)
 
-    def techlead(self, sec, t0, nb):
+    def techlead(self, sec, t0, start_bar, end_bar):
         """Archspire-density x Black Dahlia Murder-contour lead: diminished
         and harmonic-minor figures, ORDERED NON-MONOTONICALLY (skips and
         direction changes, never a plain one-string-per-fret sweep),
@@ -191,7 +229,7 @@ class Player:
         ]
         GROUPS = [5, 6, 7, 4]
         prev_pitch = None
-        for bar in range(nb):
+        for bar in range(start_bar, end_bar):
             fig = FIGURES[bar % len(FIGURES)]
             base = t0 + bar * BAR
             t = base
@@ -221,7 +259,7 @@ class Player:
                     t += slot
                     note_i += 1
 
-    def riffsweep(self, sec, t0, nb):
+    def riffsweep(self, sec, t0, start_bar, end_bar):
         """A sweep built FROM the section's riff, not alongside it. The
         riff's own onset slots and pitches (G#/G in this riff) become
         accented landmark notes at their original relative positions
@@ -234,15 +272,14 @@ class Player:
         instead of a static loop. One trill closes the phrase."""
         r = sec.get("riff", {})
         frets = {int(k): v for k, v in r.get("frets", {}).items()}
-        start_bar = sec.get("lead_start_bar", 0)
-        if not frets or start_bar >= nb:
+        if not frets or start_bar >= end_bar:
             return
         root = G_LO + r.get("detune", 0) + 31
         spine = sorted(frets)
         FILL = [0, 6, 3, 9, 6, 0, 9, 3]              # diminished-7, skips
         fill_i = 0
         prev_pitch = None
-        for bar in range(start_bar, nb):
+        for bar in range(start_bar, end_bar):
             trans = (3 * (bar - start_bar)) % 12      # rising minor 3rds
             base = t0 + bar * BAR
             for idx, slot in enumerate(spine):
@@ -250,11 +287,11 @@ class Player:
                 accent = min(79, root + trans + frets[slot])
                 if idx + 1 < len(spine):
                     gap = (spine[idx + 1] - slot) * 0.25
-                elif bar + 1 < nb:
+                elif bar + 1 < end_bar:
                     gap = (16 - slot) * 0.25 + spine[0] * 0.25
                 else:
                     gap = (16 - slot) * 0.25
-                is_final = (bar == nb - 1 and idx == len(spine) - 1)
+                is_final = (bar == end_bar - 1 and idx == len(spine) - 1)
                 if is_final:
                     self.lead.add(onset_t, 1.4, accent, 110, "trill_m3")
                     continue
@@ -278,9 +315,33 @@ class Player:
                         prev_pitch = p
                         tt += step
 
-    def play_extras(self, sec, t0):
-        nb = int(sec["bars"])
-        lead = sec.get("lead", "none")
+    def leadriff(self, sec, t0, start_bar, end_bar):
+        """A lead RIFF, not a free line: doubles the rhythm chugs
+        bar-for-bar (phrase-aware — follows the same A/B pattern as the
+        rhythm guitars), harmonizing each hit a minor third above on the
+        'A' pattern and a tritone above on the answering bar, with the
+        SAME articulation as the chug it doubles (picked where the chug
+        is picked, ringing where it rings). This is a lead built AROUND
+        the rhythm, not laid over it."""
+        for b in range(start_bar, end_bar):
+            mask, frets, detune, ring, vel = self._bar_riff(sec, b)
+            letter = self._phrase_letter(sec, b)
+            interval = 3 if letter == "A" else 6
+            base = t0 + b * BAR
+            slots = sorted(frets)
+            for idx, i in enumerate(slots):
+                t = base + i * 0.25
+                nxt = slots[idx + 1] if idx + 1 < len(slots) else 16
+                gap = (nxt - i) * 0.25
+                dur = min(gap * (0.95 if ring else 0.85), 1.2)
+                pitch = midi_of(0, frets[i]) + detune
+                gp = pitch if pitch >= 30 else pitch + 12
+                lead_pitch = min(79, gp + 12 + interval)
+                art = "sus" if (ring or gap > 0.75) else "pm"
+                self.lead.add(t, dur, lead_pitch, vel - 6, art)
+
+    def _dispatch_lead(self, sec, t0, nb, lead, start_bar, end_bar):
+        end_bar = min(end_bar, nb)
         if lead.startswith("trem"):
             base_fret = int(lead.split(":")[1]) if ":" in lead else 5
             trem = make_tremolo(RNG, sec["bpm"], nbars=4, string=2,
@@ -309,9 +370,21 @@ class Player:
             self.lead.add(t0 + bars(1), bars(min(2.5, nb - 1)),
                           G_LO + 31, 58, "vib")
         elif lead == "techlead":
-            self.techlead(sec, t0, nb)
+            self.techlead(sec, t0, start_bar, end_bar)
         elif lead == "riffsweep":
-            self.riffsweep(sec, t0, nb)
+            self.riffsweep(sec, t0, start_bar, end_bar)
+        elif lead == "leadriff":
+            self.leadriff(sec, t0, start_bar, end_bar)
+
+    def play_extras(self, sec, t0):
+        nb = int(sec["bars"])
+        self._dispatch_lead(sec, t0, nb, sec.get("lead", "none"),
+                            sec.get("lead_start_bar", 0),
+                            sec.get("lead_end_bar", nb))
+        if sec.get("lead2"):
+            self._dispatch_lead(sec, t0, nb, sec["lead2"],
+                                sec.get("lead2_start_bar", 0),
+                                sec.get("lead2_end_bar", nb))
         for b in sec.get("skronk", []):
             for (st, fr) in panic_chord(RNG):
                 p = midi_of(st, fr)
