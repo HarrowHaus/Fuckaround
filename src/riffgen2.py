@@ -168,6 +168,13 @@ def fitness(g, band, role):
     f += (same / 8.0) * 0.6
     if g.mask[0] != "X":
         f -= 10.0                             # beat-1 anchor law
+    # breakdown discipline (corpus law): the riff is RHYTHM, not melody —
+    # one pitch move per bar max, at most two distinct pitches
+    if role.get("discipline"):
+        vals = [g.frets[i] for i in sorted(g.frets)]
+        changes = sum(1 for a, b in zip(vals, vals[1:]) if a != b)
+        f -= max(0, changes - 1) * 1.5
+        f -= max(0, len(set(vals)) - 2) * 2.0
     return f
 
 

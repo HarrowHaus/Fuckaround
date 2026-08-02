@@ -177,6 +177,29 @@ def write_all_midis():
         write_guitar_midi(score, "clean", f"{MIDI_DIR}/clean.mid")
     elif os.path.exists(f"{MIDI_DIR}/clean.mid"):
         os.remove(f"{MIDI_DIR}/clean.mid")     # stale from another song
+
+    # QUAD tracking (docs/19: "most modern metal albums are quad tracked"):
+    # second take per side = same part, independent micro-timing/velocity —
+    # a real double, not a copy
+    if getattr(songmod.get_song(), "QUAD", False):
+        import random as _r
+        for src_name, take2 in (("gtr_l", "gtr_l2"), ("gtr_r", "gtr_r2")):
+            rng = _r.Random(hash(take2) & 0xffff)
+            tr = score.tracks[src_name]
+            t2 = type(tr)(take2)
+            t2.notes = [Note(max(0.0, n.start + rng.uniform(-0.006, 0.006)),
+                             n.dur * rng.uniform(0.96, 1.04), n.pitch,
+                             max(30, min(127,
+                                         n.vel + rng.randint(-5, 5))),
+                             n.tags)
+                        for n in tr.notes]
+            score.tracks[take2] = t2
+            write_guitar_midi(score, take2, f"{MIDI_DIR}/{take2}.mid")
+            del score.tracks[take2]
+    else:
+        for f2 in (f"{MIDI_DIR}/gtr_l2.mid", f"{MIDI_DIR}/gtr_r2.mid"):
+            if os.path.exists(f2):
+                os.remove(f2)
     # bass lib maps at written pitch (verified: key 44 sounds G#1 52 Hz),
     # so transpose +12 to sound in unison with the guitars' low register.
     # Lead-bass songs (darkblack_keysw) get articulation keyswitches too.
@@ -318,6 +341,12 @@ def main(stage="all"):
         ("gtr_r", GTX, NAM_6534, 4.0, [(IR_57, 0.0), (IR_421, -4.0)]),
         ("lead",  GTX, NAM_JSX, 2.0, [(IR_421, 0.0), (IR_57, -3.0)]),
     ]
+    if os.path.exists(f"{MIDI_DIR}/gtr_l2.mid"):
+        # quad: each side gets both amp flavors (take 2 crosses over)
+        jobs += [
+            ("gtr_l2", GTX, NAM_6534, 4.0, [(IR_421, 0.0), (IR_57, -4.0)]),
+            ("gtr_r2", GTX, NAM_5150, 4.0, [(IR_421, 0.0), (IR_57, -4.0)]),
+        ]
     if stage in ("all", "guitars"):
         for name, sfz, nam, gin, irs in jobs:
             di = f"{STEMS}/{name}_di.wav"

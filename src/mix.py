@@ -217,7 +217,8 @@ def build_drums(rides=None):
 
 def build_guitars(gtr_ride=None):
     l = stem("gtr_l"); r = stem("gtr_r")
-    n = max(l.shape[1], r.shape[1])
+    l2 = stem("gtr_l2"); r2 = stem("gtr_r2")
+    n = max([x.shape[1] for x in (l, r, l2, r2) if x is not None])
     if PROFILE == "raw2007":
         # 2007 budget-studio voicing: mid-present bark, less surgical
         post = Pedalboard([
@@ -251,17 +252,30 @@ def build_guitars(gtr_ride=None):
             PeakFilter(4000, -4.0, 6.0),
             PeakFilter(2800, -1.5, 1.5),       # vocal pocket prep
         ])
-    l = fx(post, dsp.pad_to(l, n)); r = fx(post, dsp.pad_to(r, n))
-    # chug bloom controlled DYNAMICALLY — only compresses 100-230 Hz when a
-    # chug actually blooms, instead of a permanent EQ hole
-    if PROFILE != "raw2007":
-        l = dsp.dynamic_eq(l, 100, 230, thresh_db=-26, max_cut_db=4.5,
-                           attack_ms=6, release_ms=120)
-        r = dsp.dynamic_eq(r, 100, 230, thresh_db=-26, max_cut_db=4.5,
-                           attack_ms=6, release_ms=120)
+    takes = {"l": l, "r": r}
+    if l2 is not None and r2 is not None:
+        takes["l2"] = l2
+        takes["r2"] = r2
+    for k in takes:
+        x = fx(post, dsp.pad_to(takes[k], n))
+        # chug bloom controlled DYNAMICALLY — only compresses 100-230 Hz
+        # when a chug actually blooms, instead of a permanent EQ hole
+        if PROFILE != "raw2007":
+            x = dsp.dynamic_eq(x, 100, 230, thresh_db=-26, max_cut_db=4.5,
+                               attack_ms=6, release_ms=120)
+        takes[k] = np.mean(x, axis=0)
     wall = np.zeros((2, n))
-    wall[0] += np.mean(l, axis=0)          # hard pan L
-    wall[1] += np.mean(r, axis=0)          # hard pan R
+    if "l2" in takes:
+        # quad wall (docs/19): takes at 100/80 per side, -3 dB each so the
+        # four-source wall sits at the dual-wall level
+        g = db(-3.0)
+        wall[0] += takes["l"] * g + takes["l2"] * 0.9 * g \
+            + takes["r2"] * 0.1 * g
+        wall[1] += takes["r"] * g + takes["r2"] * 0.9 * g \
+            + takes["l2"] * 0.1 * g
+    else:
+        wall[0] += takes["l"]              # hard pan L
+        wall[1] += takes["r"]              # hard pan R
     # amp-in-the-room: a tiny dark early-reflection bed glued under the wall
     # (kills the 'DI into a plugin' dryness that reads as fake)
     room = fx(Pedalboard([
@@ -453,7 +467,9 @@ def main():
     guitars = dsp.norm_active(guitars, -14.0)
     bass = dsp.norm_active(bass, -14.0)
     if lead is not None:
-        lead = dsp.norm_active(lead, -16.0)
+        # PEAK-normalize the lead: active-RMS normalization over-boosts
+        # sparse material (every lone ring came out as loud as the wall)
+        lead = lead * db(-12.0 - dsp.peak_db(lead))
     if clean is not None:
         clean = dsp.norm_active(clean, -18.0)
     for k in list(orch):
@@ -474,7 +490,8 @@ def main():
     # guitars, symphonics -6..-10 under guitars, leads ride above the wall)
     stems_gains = [(drums, 0.0), (guitars, -2.5), (bass, -5.5)]
     if lead is not None:
-        stems_gains.append((lead, 1.0))
+        # leads sit IN the wall, not on top of it (lead-vs-rhythm law)
+        stems_gains.append((lead, -3.0 if PROFILE == "modern2026" else 1.0))
     if clean is not None:
         stems_gains.append((clean, -8.0))   # the bridge must breathe
     for nm, g in (("strings", -5.0), ("strings_stac", -4.0),

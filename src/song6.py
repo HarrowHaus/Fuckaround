@@ -21,12 +21,14 @@ import random
 set_dialect("modern")
 import riffgen2 as r2
 from riffgen2 import genome_riff
+from drumgen import DrumBook
 
 random.seed(67)
 RNG = random.Random(67)
 
 TITLE = "ouroboros_engine"
 MIX_PROFILE = "modern2026"
+QUAD = True          # four rhythm takes (docs/19 quad-tracking law)
 
 BAR = 4.0
 G_LO = TUNING[0]
@@ -59,6 +61,7 @@ class Ouro:
         for nm in ("gtr_l", "gtr_r", "lead", "bass", "drums",
                    "subdrop", "subbass", "fx"):
             setattr(self, nm, self.s.track(nm))
+        self.book = DrumBook()
         self.tabs = []
         self.lineage = []
         self.fitlog = []
@@ -100,9 +103,14 @@ class Ouro:
                     if kick_follow:
                         self.drum(t, "kick", 118, dur=0.1)
 
-    def skronk(self, t, dur=1.2, vel=96):
+    def skronk(self, t, dur=1.2, vel=102):
+        """Panic chord the corpus way: the RHYTHM guitars stab it (both
+        players hit the cluster and let it ring over the low chug) — not a
+        floating lead overdub."""
         for (st, fr) in panic_chord(RNG):
-            self.lead.add(t, dur, midi_of(st, fr), vel, "sus")
+            p = midi_of(st, fr)
+            self.gtr_l.add(t, dur, p, vel, "sus")
+            self.gtr_r.add(t, dur, p, vel - 4, "sus")
 
     def sub_root(self, t0, nbars, root=None):
         for b in range(int(nbars)):
@@ -111,39 +119,29 @@ class Ouro:
             self.subbass.add(base, BAR * 0.96, p, 110, "sub")
 
     # ----------------------------------------------------------- drums
-    def engine_beat(self, t0, nbars, blast_tail=4):
-        groove = int(nbars) - blast_tail
-        for b in range(groove):
-            base = t0 + b * BAR
-            for s in range(16):
-                self.drum(base + s * 0.25, "kick", 112, dur=0.08)
-            self.drum(base + 1.0, "snare", 121)
-            self.drum(base + 3.0, "snare", 121)
-            for q in range(4):
-                self.drum(base + q, "ride", 88)
-        for b in range(max(0, groove), int(nbars)):
-            base = t0 + b * BAR
-            for e in range(8):
-                self.drum(base + e * 0.5, "snare", 108 + (e == 0) * 8)
-                self.drum(base + e * 0.5, "kick", 112, dur=0.08)
-                self.drum(base + e * 0.5, "ride", 84)
-
-    def bounce_beat(self, t0, nbars):
-        for b in range(int(nbars)):
-            base = t0 + b * BAR
-            self.drum(base + 2.0, "snare", 122)
-            for tt in (0.0, 0.75, 1.5, 2.75, 3.25):
-                self.drum(base + tt, "kick", 116, dur=0.1)
-            for e in range(8):
-                self.drum(base + e * 0.5, "hihat_closed", 82 - (e % 2) * 14)
-            self.drum(base + 3.5, "hihat_open", 92)
-
-    def breakdown_kit(self, t0, nbars):
-        for b in range(int(nbars)):
-            base = t0 + b * BAR
-            self.drum(base + 2.0, "snare", 123)
-            for q in range(4):
-                self.drum(base + q, "china", 102 + (q == 0) * 10)
+    # Every groove bar is a REAL mined corpus bar (drumgen.DrumBook),
+    # chosen by kick<->riff agreement (measured law: 0.755 coupling).
+    def book_bars(self, t0, nbars, band, riff_mask, kick_lo=0, kick_hi=16,
+                  prefer_cym=None, couple=True, union_riff=False,
+                  vel=116, repeat_of=2, need_snare=True):
+        """Write nbars of mined patterns; a pattern holds for `repeat_of`
+        bars (drummers repeat), re-sampled after. union_riff forces the
+        kick to also cover every riff onset (breakdown law)."""
+        def dfn(t, name, v, dur):
+            self.drum(t, name, v, dur)
+        b = 0
+        while b < int(nbars):
+            pat = self.book.pick(RNG, band, riff_mask, kick_lo, kick_hi,
+                                 need_snare=need_snare,
+                                 prefer_cym=prefer_cym, couple=couple)[0]
+            if union_riff:
+                kick = "".join("X" if (pat["kick"][i] == "X"
+                                       or riff_mask[i] == "X") else "."
+                               for i in range(16))
+                pat = dict(pat, kick=kick)
+            for rep in range(min(repeat_of, int(nbars) - b)):
+                self.book.write_bar(dfn, t0 + (b + rep) * BAR, pat, vel=vel)
+            b += repeat_of
 
     # ----------------------------------------------------------- build
     def build(self):
@@ -164,7 +162,8 @@ class Ouro:
                             log=self.fitlog)
         self.lineage.append(("groove B", f"{tB}(verse A)", self.fitlog[-1]))
         fb, tF = r2.develop(RNG, gB, "augment", "breakdown",
-                            dict(density=0.25, offbeat=0.3),
+                            dict(density=0.25, offbeat=0.3,
+                                 discipline=True),
                             log=self.fitlog)
         fb = r2.t_thin(RNG, fb, 1)
         self.lineage.append(("front breakdown", f"thin({tF}(groove B))",
@@ -174,12 +173,14 @@ class Ouro:
                              log=self.fitlog)
         self.lineage.append(("verse A'", f"{tV}(verse A)", self.fitlog[-1]))
         val, tVa = r2.develop(RNG, fb, "augment", "breakdown",
-                              dict(density=0.2, offbeat=0.15),
+                              dict(density=0.2, offbeat=0.15,
+                                   discipline=True),
                               log=self.fitlog)
         self.lineage.append(("valley", f"{tVa}(front breakdown)",
                              self.fitlog[-1]))
         fin, tFi = r2.develop(RNG, gB, "augment", "breakdown",
-                              dict(density=0.22, offbeat=0.25),
+                              dict(density=0.22, offbeat=0.25,
+                                   discipline=True),
                               log=self.fitlog)
         self.lineage.append(("final breakdown",
                              f"{tFi}(groove B) + gear drop -2",
@@ -196,7 +197,8 @@ class Ouro:
         t = self.sec["verseA"]
         self.drum(t, "crash1", 118)
         self.play_genome(vA, t, 12, 160, label="verse A = diminish(M0)")
-        self.engine_beat(t, 12)
+        self.book_bars(t, 12, "mid", vA.mask, kick_lo=10,
+                       prefer_cym="crash", repeat_of=4)
         self.sub_root(t, 12)
         for b in (3, 7):
             self.skronk(t + bars(b) + 2.0, dur=1.8)
@@ -205,15 +207,18 @@ class Ouro:
         self.drum(t, "crash2", 116)
         self.play_genome(gB, t, 8, 118, vel=106,
                          label="groove B = displace(verse A)")
-        self.bounce_beat(t, 8)
+        self.book_bars(t, 8, "breakdown", gB.mask, kick_lo=3, kick_hi=9,
+                       prefer_cym="hat", repeat_of=2)
         self.sub_root(t, 8)
 
         t = self.sec["frontbreak"]
         self.subdrop.add(t, 2.0, G_LO, 120, "drop")
         self.fx.add(t, bars(1), 0, 110, "impact")
-        self.play_genome(fb, t, 8, 82, vel=112, kick_follow=True,
+        self.play_genome(fb, t, 8, 82, vel=112,
                          label="front breakdown = thin(augment(groove B))")
-        self.breakdown_kit(t, 8)
+        self.book_bars(t, 8, "breakdown", fb.mask, kick_lo=1, kick_hi=8,
+                       prefer_cym="china", union_riff=True, vel=120,
+                       repeat_of=2)
         self.sub_root(t, 8)
         self.skronk(t + bars(5), dur=2.5)
 
@@ -222,7 +227,20 @@ class Ouro:
         self.play_genome(vA2, t, 12, 148,
                          label="verse A' = invert(verse A) — the motif "
                                "improved on itself")
-        self.engine_beat(t, 12, blast_tail=2)
+        self.book_bars(t, 12, "mid", vA2.mask, kick_lo=10,
+                       prefer_cym="crash", repeat_of=4)
+        # the octave lead: doubles verse A's pitch moves two octaves up —
+        # a lead line WITH a job (harmonizing the improved restatement),
+        # sitting in the wall, not floating over it
+        for rep in range(3):
+            for b in range(4):
+                base = t + (rep * 4 + b) * BAR
+                prev = None
+                for i in sorted(vA2.frets):
+                    if vA2.frets[i] != prev:
+                        prev = vA2.frets[i]
+                        self.lead.add(base + i * 0.25, 1.1,
+                                      midi_of(0, prev) + 24, 92, "sus")
         self.sub_root(t, 12)
 
         t = self.sec["valley"]
@@ -238,10 +256,9 @@ class Ouro:
                                   max(28, midi_of(0, frets[i]) - 12),
                                   108, "pm")
                 self.roots[base] = midi_of(0, frets[min(frets)])
-        for b in range(8):
-            base = t + b * BAR
-            self.drum(base, "kick", 106, dur=0.1)
-            self.drum(base + 2.0, "snare", 96)
+        self.book_bars(t, 8, "breakdown", val.mask, kick_lo=1, kick_hi=4,
+                       need_snare=False, prefer_cym="none", vel=106,
+                       repeat_of=2)
         self.lead.add(t + bars(1), bars(2.5), G_LO + 31, 58, "vib")
         self.lead.add(t + bars(5), bars(2.5), G_LO + 26, 60, "vib")
         self.sub_root(t, 8)
@@ -254,10 +271,11 @@ class Ouro:
         t = self.sec["finalbreak"]
         self.subdrop.add(t, 2.4, F_LO, 124, "drop")
         self.fx.add(t, bars(1), 0, 115, "impact")
-        self.play_genome(fin, t, 8, 74, vel=114, kick_follow=True,
-                         detune=-2,
+        self.play_genome(fin, t, 8, 74, vel=114, detune=-2,
                          label="final = augment(groove B) in drop F")
-        self.breakdown_kit(t, 8)
+        self.book_bars(t, 8, "breakdown", fin.mask, kick_lo=1, kick_hi=6,
+                       prefer_cym="china", union_riff=True, vel=122,
+                       repeat_of=2)
         self.sub_root(t, 8, root=F_LO)
         for b in (1, 3, 5):
             self.gtr_l.add(t + bars(b) + 3.0, 1.0, F_LO + 36, 120, "pinch")
