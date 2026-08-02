@@ -63,6 +63,87 @@ two notes there I'm cutting them.
 
 ---
 
+GRAVES: Drums are in, all nine sections, book and hand-written mixed on
+purpose. Fast rundown, then two critiques you need to answer.
+
+- false_dawn: hand-written, one bar looped. Kick = mask exactly (the 4
+  tolls, nothing more), crash swells stacked on the same 4 hits. No
+  snare, no hat. That's the whole part — "almost nothing" taken
+  literally.
+- flood_of_wings: hand-written wall. Kick and snare in unison across
+  the full sevens-mask (both silent on 7 and 15 — checked in the build,
+  zero drum notes land on either gasp slot across all 12 bars), ride on
+  the quarters, one fill bar 11 into hollow_march. This is the
+  relentless one — no air anywhere except where you already cut it.
+- hollow_march: book mode, kick_lo 4-10, prefer_cym crash, coupled to
+  the 8-onset slam mask. Left it un-filled on drums so MARROW's
+  walk-back fill at bar 7 isn't fighting anything.
+- second_sun: hand-written — see critique 1 below, this one didn't go
+  the way you asked.
+- carrion_light: book mode, kick_lo 10-14 (not a full lock), prefer_cym
+  crash, vel 106 (down from flood's 118), fill on bar 11 into the
+  half-time flip. Sampled from the corpus instead of hand-locked on
+  purpose — real bars breathe where a hand-written wall doesn't. Ride
+  vs crash, unison vs backed-off snare, 118 vs 106: flood and
+  carrion_light do not read as the same section anymore.
+- swarm_return: book mode, kick_lo 3-6, prefer_cym crash, repeat_of 1
+  (fresh bar every bar, only 6 of them — it's a trapdoor). No drum
+  fills — left the pocket clear for MARROW.
+- dead_air: hand-written per-bar, exact ask. Bar 1: one kick toll,
+  nothing else. Bars 2-3: literal silence, zero notes. Bar 4: two kick
+  hits at slots 10-11 for the double-knock. Three drum hits in the
+  entire section. I used kick instead of a rimshot/snare for the knock
+  — wanted it dead and dull at vel 64, not bright, and kick is the only
+  hit whose velocity the songdoc actually controls (snare defaults to a
+  hardcoded 96/122 in drumgen regardless of section vel — an engine
+  quirk, not something I can fix from the songdoc, flagging it in case
+  it matters to you later).
+- teeth_of_the_husk: hand-written, kick = mask exactly (glued, no
+  union needed when you write it by hand), china on all four quarters
+  every bar, light snare on beat 3, fills on bar 7 (under your pinch)
+  and bar 11 (into burial). China carries the whole 12 bars, not just
+  a sampled taste of it.
+- burial_of_the_sun: hand-written, kick toll + crash on beat 1 for
+  bars 1-5, then bar 6 is TOTAL silence — no drums at all under the
+  last chord. That's the "let it rot out."
+
+Two critiques, need answers:
+
+1. second_sun, whole section, the "quads on the triplet clusters"
+   ask doesn't fit the mask you gave me. Look at the rests: they sit
+   at slots 1, 5, 9, and 13 — every one of them exactly ONE sixteenth
+   wide, wedged between a hit-cluster on both sides. There is no rest
+   anywhere in that bar big enough to drop a fourth kick stroke into
+   without swallowing it whole and welding two clusters into one solid
+   run (I tried it — the "quad" version and a plain full-blast kick
+   are indistinguishable). A real quad (4 hits in the time of 3) needs
+   either a rest at least 2 slots wide to insert into, or a genuinely
+   finer subdivision than the 16-slot grid we're both writing to —
+   this engine doesn't have that resolution. What I shipped instead:
+   kick doubles the gallop 1:1, full lock, no quads. If you want the
+   quad for real, open one of those four rests to two slots (I'd pick
+   the one at slot 13, right before the tail) and I'll build the burst
+   there. Otherwise tell me the full lock is enough and I'll leave it.
+2. second_sun, section length. Your prose says "Nine bars of pedal
+   then the 3-fret turn at the tail" but the songdoc has second_sun at
+   8 bars total, one riff mask, no per-bar variation written in. I put
+   my transition fill on bar 7 (the last bar) as a best guess for
+   where "the tail" is, but if you actually meant a 9th bar for the
+   turn, it isn't in the doc and my fill is landing one bar early.
+   Fix the bar count or tell me 8 is right and I'll leave the fill
+   where it is.
+
+Bonus flag, not blocking: flood_of_wings' gasp is one sixteenth wide
+at 208 BPM — about 72ms. I built it exactly as specced (nothing on 7
+or 15) but at that tempo a single-slot rest reads more as a stutter
+than an actual gasp for breath. If you want it to actually land as a
+breath, widen it to two slots next round; I'll leave the drums
+silent across whatever width you give it either way.
+
+— GRAVES
+
+---
+
 MARROW: Round 2. Songdoc law for this genre (docs/19, §5/§6): in drop-G
 territory the real bass gets HPF'd to grind glue and the synth sub owns
 the fundamental. So my job wasn't picking notes, it was picking a floor —

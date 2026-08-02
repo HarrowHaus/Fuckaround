@@ -12,7 +12,14 @@
         "ring": true,
         "vel": 98
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X.....X..X....X.", "snare": "................",
+           "cym": "crash", "cmask": "X.....X..X....X."}
+        ],
+        "vel": 72
+      },
       "bass": "follow",
       "lead": "feedback",
       "drone": true,
@@ -28,7 +35,15 @@
                   "8": 3, "9": 3, "10": 3, "11": 3, "12": 3, "13": 3, "14": 3},
         "vel": 112
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "XXXXXXX.XXXXXXX.", "snare": "XXXXXXX.XXXXXXX.",
+           "cym": "ride", "cmask": "X...X...X...X..."}
+        ],
+        "fills": [11],
+        "vel": 118
+      },
       "bass": "follow",
       "lead": "trem:5",
       "riser_in": true,
@@ -45,7 +60,15 @@
         "frets": {"0": 0, "2": 0, "3": 0, "6": 0, "8": 0, "10": 3, "11": 3, "14": 2},
         "vel": 114
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "book",
+        "kick_lo": 4,
+        "kick_hi": 10,
+        "prefer_cym": "crash",
+        "need_snare": true,
+        "repeat_of": 2,
+        "vel": 112
+      },
       "bass": "follow+fills",
       "lead": "none",
       "pinch": [3, 7],
@@ -61,7 +84,15 @@
                   "10": 0, "11": 0, "12": 3, "14": 3, "15": 3},
         "vel": 110
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X.XXX.XXX.XXX.XX", "snare": "....X...X...X...",
+           "cym": "ride", "cmask": "X...X...X...X..."}
+        ],
+        "fills": [7],
+        "vel": 116
+      },
       "bass": "follow+fills",
       "lead": "none",
       "sub": true
@@ -76,7 +107,16 @@
                   "7": 3, "8": 3, "9": 3, "10": 3, "11": 3, "12": 3, "14": 5},
         "vel": 112
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "book",
+        "kick_lo": 10,
+        "kick_hi": 14,
+        "prefer_cym": "crash",
+        "need_snare": true,
+        "repeat_of": 2,
+        "fills": [11],
+        "vel": 106
+      },
       "bass": "follow",
       "lead": "octave",
       "impact": true,
@@ -91,7 +131,15 @@
         "frets": {"0": 0, "3": 0, "7": 0, "10": 5, "13": 5},
         "vel": 116
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "book",
+        "kick_lo": 3,
+        "kick_hi": 6,
+        "prefer_cym": "crash",
+        "need_snare": true,
+        "repeat_of": 1,
+        "vel": 116
+      },
       "bass": "follow+fills",
       "lead": "none",
       "skronk": [2],
@@ -108,7 +156,20 @@
         "ring": true,
         "vel": 64
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X...............", "snare": "................",
+           "cym": "none", "cmask": "................"},
+          {"kick": "................", "snare": "................",
+           "cym": "none", "cmask": "................"},
+          {"kick": "................", "snare": "................",
+           "cym": "none", "cmask": "................"},
+          {"kick": "..........XX....", "snare": "................",
+           "cym": "none", "cmask": "................"}
+        ],
+        "vel": 64
+      },
       "bass": "follow",
       "lead": "feedback",
       "drone": false,
@@ -124,7 +185,15 @@
         "detune": -2,
         "vel": 120
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X..X..X...X.X..X", "snare": "........X.......",
+           "cym": "china", "cmask": "X...X...X...X..."}
+        ],
+        "fills": [7, 11],
+        "vel": 120
+      },
       "bass": "follow",
       "lead": "none",
       "riser_in": true,
@@ -144,7 +213,24 @@
         "ring": true,
         "vel": 104
       },
-      "drums": {"mode": "book"},
+      "drums": {
+        "mode": "bars",
+        "bars": [
+          {"kick": "X...............", "snare": "................",
+           "cym": "crash", "cmask": "X..............."},
+          {"kick": "X...............", "snare": "................",
+           "cym": "crash", "cmask": "X..............."},
+          {"kick": "X...............", "snare": "................",
+           "cym": "crash", "cmask": "X..............."},
+          {"kick": "X...............", "snare": "................",
+           "cym": "crash", "cmask": "X..............."},
+          {"kick": "X...............", "snare": "................",
+           "cym": "crash", "cmask": "X..............."},
+          {"kick": "................", "snare": "................",
+           "cym": "none", "cmask": "................"}
+        ],
+        "vel": 68
+      },
       "bass": "follow",
       "lead": "feedback",
       "drone": true,
