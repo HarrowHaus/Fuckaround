@@ -4,7 +4,7 @@
   "sections": [
     {
       "name": "the_halving",
-      "bars": 8,
+      "bars": 12,
       "bpm": 96,
       "riff": {
         "mask": "XXX.X.XX.XX.X...",
@@ -13,16 +13,38 @@
         "vel": 116
       },
       "drums": {
-        "mode": "book",
-        "kick_lo": 6,
-        "kick_hi": 12,
-        "prefer_cym": "china",
-        "need_snare": true,
-        "repeat_of": 2,
+        "mode": "bars",
+        "bars": [
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X...X...X...X..."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X...X...X...X..."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X...X...X...X..."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."},
+          {"kick": "X...............", "snare": "........X.......",
+           "cym": "china", "cmask": "X.X.X.X.X.X.X.X."}
+        ],
         "vel": 118
       },
       "bass": "follow",
-      "lead": "techlead",
+      "lead": "riffsweep",
+      "lead_start_bar": 6,
       "impact": true,
       "subdrop": true,
       "sub": true

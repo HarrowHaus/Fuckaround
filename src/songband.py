@@ -11,11 +11,19 @@ songdoc schema (per section):
   drums: {mode: 'book'|'bars', prefer_cym, kick_lo, kick_hi, union_riff,
           bars: [{kick, snare, cym, cmask}, ...]}   # bars mode = literal
   lead:  'none' | 'trem:<base_fret>' | 'octave' | 'feedback' | 'techlead'
+         | 'riffsweep'
          # techlead: diminished/harmonic-minor shred line, irregular note
          # groupings per beat (polymetric against the riff), hammer-on/
          # pull-off legato + one trill/bend flourish per figure. Rooted at
          # the section's open-string pitch. Archspire-density x Black
          # Dahlia Murder-contour, never a straight up/down sweep.
+         # riffsweep: a fast sweep built FROM the section's own riff — the
+         # riff's onset slots/pitches become accented landmark notes at
+         # their original relative positions, connected by fast diminished-
+         # arpeggio fill notes (legato-tagged) so the riff is audible
+         # inside the cascade. Each bar sequences up a minor third.
+  lead_start_bar: int, bars into the section before the lead enters
+                  (default 0). Rhythm/drums/bass play from bar 0 either way.
   bass:  'follow' | 'follow+fills'
   skronk: [bar indices], pinch: [bar indices]
   subdrop: bool, drone: bool, impact: bool, riser_in: bool
@@ -197,6 +205,63 @@ class Player:
                     t += slot
                     note_i += 1
 
+    def riffsweep(self, sec, t0, nb):
+        """A sweep built FROM the section's riff, not alongside it. The
+        riff's own onset slots and pitches (G#/G in this riff) become
+        accented landmark notes at their original relative positions
+        inside the phrase; the space between them fills with fast
+        diminished-7 arpeggio runs sharing the same root tension, tagged
+        so tight intervals resolve to legato hammer-on/pull-off (the
+        'sweep' sound is picked attack on landmarks, slurred cascade
+        between them). Sequences up a minor third each bar — same
+        harmonic world throughout (diminished symmetry), rising energy
+        instead of a static loop. One trill closes the phrase."""
+        r = sec.get("riff", {})
+        frets = {int(k): v for k, v in r.get("frets", {}).items()}
+        start_bar = sec.get("lead_start_bar", 0)
+        if not frets or start_bar >= nb:
+            return
+        root = G_LO + r.get("detune", 0) + 31
+        spine = sorted(frets)
+        FILL = [0, 6, 3, 9, 6, 0, 9, 3]              # diminished-7, skips
+        fill_i = 0
+        prev_pitch = None
+        for bar in range(start_bar, nb):
+            trans = (3 * (bar - start_bar)) % 12      # rising minor 3rds
+            base = t0 + bar * BAR
+            for idx, slot in enumerate(spine):
+                onset_t = base + slot * 0.25
+                accent = min(79, root + trans + frets[slot])
+                if idx + 1 < len(spine):
+                    gap = (spine[idx + 1] - slot) * 0.25
+                elif bar + 1 < nb:
+                    gap = (16 - slot) * 0.25 + spine[0] * 0.25
+                else:
+                    gap = (16 - slot) * 0.25
+                is_final = (bar == nb - 1 and idx == len(spine) - 1)
+                if is_final:
+                    self.lead.add(onset_t, 1.4, accent, 110, "trill_m3")
+                    continue
+                acc_len = min(gap * 0.4, 0.2)
+                tag = ("fast" if prev_pitch is not None
+                      and abs(accent - prev_pitch) <= 4 else "sus")
+                self.lead.add(onset_t, acc_len, accent, 114, tag)
+                prev_pitch = accent
+                remain = gap - acc_len
+                if remain > 0.02:
+                    k = max(1, round(remain / 0.06))
+                    step = remain / k
+                    tt = onset_t + acc_len
+                    for _ in range(k):
+                        off = FILL[fill_i % len(FILL)]
+                        fill_i += 1
+                        p = min(79, root + trans + off)
+                        ftag = ("fast" if abs(p - prev_pitch) <= 4
+                               else "sus")
+                        self.lead.add(tt, step * 0.9, p, 90, ftag)
+                        prev_pitch = p
+                        tt += step
+
     def play_extras(self, sec, t0):
         nb = int(sec["bars"])
         lead = sec.get("lead", "none")
@@ -229,6 +294,8 @@ class Player:
                           G_LO + 31, 58, "vib")
         elif lead == "techlead":
             self.techlead(sec, t0, nb)
+        elif lead == "riffsweep":
+            self.riffsweep(sec, t0, nb)
         for b in sec.get("skronk", []):
             for (st, fr) in panic_chord(RNG):
                 p = midi_of(st, fr)
