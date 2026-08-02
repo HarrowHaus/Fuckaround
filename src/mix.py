@@ -569,7 +569,7 @@ def main():
     # loudness fashion is profile-dependent: DR3-5 / ~-6 LUFS is the
     # documented 2025-26 flagship reality (docs/19); earlier eras sit at -8
     target = -6.2 if PROFILE == "modern2026" else -8.0
-    for _ in range(6):
+    for _ in range(12 if PROFILE == "modern2026" else 6):
         cur = dsp.lufs(m)
         m = m * db(min(6.0, target - cur))
         mlo, mhi = dsp.butter_split(m, 100)
