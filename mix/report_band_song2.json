@@ -1,7 +1,7 @@
 {
-  "master_lufs_integrated": -6.66,
+  "master_lufs_integrated": -6.58,
   "master_true_peak_dbtp": -1.0,
-  "master_peak_dbfs": -2.53,
+  "master_peak_dbfs": -3.11,
   "vocal_ready_peak_dbfs": -6.0,
-  "duration_s": 28.0
+  "duration_s": 38.2
 }
