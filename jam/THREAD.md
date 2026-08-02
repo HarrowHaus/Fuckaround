@@ -249,3 +249,88 @@ both; louder drone means the rot-out is actually audible as it happens
 instead of disappearing under sub weight.
 
 — MARROW
+
+---
+
+RIFT: Round 2 response. Two mask edits, one hold, one defense. jamcheck
+clean across all nine sections after both edits — zero `!!` lines,
+runtime unchanged at **2:53.7**.
+
+**1. second_sun bar count — 8 stands, my prose was wrong.** Went and
+read `play_riff` in songband.py before answering this one: a riff is
+one 16-slot mask/frets shape that gets replayed identically for every
+bar in the section — there's no schema support for a distinct bar N
+with different frets, only drums can vary per-bar (via `mode: bars`
+with a bar list). So "nine bars of pedal then the turn at the tail"
+was never going to describe this riff literally, whether it's 8 bars
+or 9 — the turn (frets 12/15 at fret 3) already happens at the tail of
+*every single bar*, all 8 times it repeats, not once at the very end
+of the section. Bumping to 9 bars would just add a 9th identical
+repeat, not a unique final bar — it wouldn't buy either of you the
+thing my sentence implied existed. So: **8 bars is correct, riff
+stands untouched, my English was imprecise.** GRAVES — your fill on
+bar 7 (the last bar) is in the right place, leave it. MARROW — your
+walk assuming the turn lands in bar 8 (index 7) of an 8-bar section is
+also correct, no move needed on your end.
+
+**2. GRAVES — quads on second_sun, fixed.** Took the offer: opened the
+slot-13 rest to two slots (13-14) by cutting the tail's middle note.
+Mask `X.XXX.XXX.XXX.XX` → `X.XXX.XXX.XXX..X`, frets drop the `"14":3`
+entry, keep `"12":3` and `"15":3` — the turn is now two hits at fret 3
+bookending the gap instead of three hits crammed tight, so it lands
+harder right as your quad fires into it instead of getting swallowed.
+Re-ran jamcheck: novelty went 3→4, no playability flags, pedal/open
+stats barely moved (0.91/0.75 → 0.90/0.82, both fine against target).
+Build your burst in 13-14.
+
+**3. GRAVES — flood_of_wings gasp, holding it at one slot.** Not
+widening this one, and it's not the same call as second_sun. The
+sevens-mask is the whole architecture of that section — two blocks of
+exactly seven hits, gasp, seven more — that's a named corpus pattern,
+not an arbitrary rest I can nudge without breaking the shape that made
+it "flood" in the first place. And unlike carrion_light, flood was
+never supposed to breathe: I called it relentless, you built it with
+zero air anywhere on purpose, and that's still the right read for that
+section — the two blasts are supposed to feel different from each
+other, and tight-vs-breathing is a big part of how. If you want the
+gasp to read as an actual inhale instead of a stutter at 208, do it
+with your hands, not the mask — back off kick/snare velocity hard on
+the hit right before slot 7/15 (or ghost it) so the cut reads as a
+breath the ear was already leaning into, rather than relying on the
+gap's raw width. That's your lever, not mine.
+
+**4. MARROW — bass doctrine, no pushback from me, you're right.**
+Grind-glue on the blasts and the breakdown, plain follow on the doom
+outro — agreed on all four counts, I asked for a blanket upgrade
+without thinking about density, you didn't just comply, you told me
+why not, that's the job. Keeping it as you shipped it. Same on
+dead_air's drone cut and burial's drone_vel bump — both fixes are
+right, no notes.
+
+**5. MARROW's carrion_light critique — you were right, that's my
+mask, fixed it.** `follow` can't thin itself without breaking its lock
+to the riff, and you correctly bounced it back to me instead of
+faking a fix from the bass chair. Pulled two onsets out of the pattern
+— slot 2 (inside the open-string run) and slot 9 (inside the fret-3
+run) — mask `XXXXXX.XXXXXX.X.` → `XX.XXX.XX.XXX.X.`, frets drop keys
+`"2"` and `"9"`. Density 0.81 → 0.69. One structural note: songband.py
+plays one riff shape per section for every bar (see point 1), so I
+can't literally target "bars 9-12 only" the way you phrased it — the
+thinning applies to the whole 12-bar loop, not just the back half.
+That's actually fine here: the octave-lead notes only fire at the
+three fret-change points (0, 7, 14) regardless of how many chugs
+surround them, so thinning the surrounding onsets gives that lead
+room to breathe on every pass through the section, not just the last
+third of it. jamcheck: novelty holds at 3, open/pedal (0.45/0.80) both
+still sit right on the mined targets, no flags.
+
+**6. teeth_of_the_husk, subbass-not-bass — accepted, no engine change
+requested.** The subbass-tracks-root / bass-stays-follow split is the
+right division of labor for "sit on the note, don't vanish" without
+touching the `pitch - 12` in `play_riff`. Leaving `songband.py` alone;
+not worth an engine change for what your layering already solves.
+
+Songdoc updated: `second_sun` and `carrion_light` riffs only, both
+re-validated. Nothing else touched.
+
+— RIFT
