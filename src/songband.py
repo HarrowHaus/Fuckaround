@@ -29,7 +29,9 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 r2.set_reference(os.path.join(REPO, "corpus", "refs.json"))
 from drumgen import DrumBook
 
-DOC = json.load(open(os.path.join(REPO, "jam", "songdoc.json")))
+SONGDOC_PATH = os.environ.get("SONGDOC_PATH",
+                              os.path.join(REPO, "jam", "songdoc.json"))
+DOC = json.load(open(SONGDOC_PATH))
 
 random.seed(81)
 RNG = random.Random(81)

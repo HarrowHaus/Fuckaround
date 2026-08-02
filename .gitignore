@@ -11,3 +11,7 @@ mix/preview.*
 corpus/raw/
 corpus/raw_modern/
 reaper/Backups/
+jam/candidates/*/*.wav
+jam/candidates/*/*.mid
+jam/candidates/*/*_di.wav
+jam/candidates/*/*_amp.wav

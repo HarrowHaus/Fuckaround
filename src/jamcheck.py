@@ -21,7 +21,9 @@ REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 r2.set_reference(os.path.join(REPO, "corpus", "refs.json"))
 from riffgen2 import Genome, genome_riff, mask_novelty
 
-DOC = json.load(open(os.path.join(REPO, "jam", "songdoc.json")))
+SONGDOC_PATH = os.environ.get("SONGDOC_PATH",
+                              os.path.join(REPO, "jam", "songdoc.json"))
+DOC = json.load(open(SONGDOC_PATH))
 
 only = sys.argv[1] if len(sys.argv) > 1 else None
 total_s = 0.0
