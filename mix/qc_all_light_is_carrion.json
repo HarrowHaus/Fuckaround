@@ -1,0 +1,22 @@
+{
+  "lufs_integrated": -6.59,
+  "true_peak_dbtp": -1.0,
+  "crest_db": 6.4,
+  "spectrum_sub": 9.8,
+  "spectrum_low": 7.9,
+  "spectrum_lowmid": 8.5,
+  "spectrum_himid": -4.2,
+  "spectrum_presence": -10.3,
+  "spectrum_air": -17.2,
+  "stereo_correlation": 0.49,
+  "side_mid_db": -4.7,
+  "low_band_correlation": 0.97,
+  "st_lufs_intro": -7.4,
+  "st_lufs_blastA": -6.5,
+  "st_lufs_slamB": -6.4,
+  "st_lufs_reprise": -6.4,
+  "st_lufs_slamB2": -6.3,
+  "st_lufs_doomC": -6.3,
+  "st_lufs_tail": -7.3,
+  "pocket_2k4k_vs_total_db": -2.9
+}
