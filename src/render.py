@@ -399,6 +399,17 @@ def main(stage="all"):
             "choir": ["Chorus - Performance/Mixed Chorus.sfz"],
         }
         for track, files in sso.items():
+            if not os.path.exists(f"{MIDI_DIR}/{track}.mid"):
+                # this song has no such part (write_all_midis already
+                # removed any stale MIDI) — clear stale stems and skip
+                for i in range(4):
+                    p = f"{STEMS}/{track}_{i}.wav"
+                    if os.path.exists(p):
+                        os.remove(p)
+                sp = f"{STEMS}/{track}.wav"
+                if os.path.exists(sp):
+                    os.remove(sp)
+                continue
             found = []
             for f in files:
                 p = os.path.join(SSO_DIR, f)
