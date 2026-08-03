@@ -8,13 +8,26 @@ produced these files.
 
 ## 1. Get the files
 
-```
-git clone --depth 1 -b claude/deathcore-song-production-rp38dh https://github.com/HarrowHaus/Fuckaround.git "C:\music\NINE UNKNOWN MEN"
+Sparse checkout — pulls just the `songs/` folder (skips source code, corpus
+data, everything else in the repo):
+
+```powershell
+git clone --no-checkout --filter=blob:none --depth 1 -b claude/deathcore-song-production-rp38dh https://github.com/HarrowHaus/Fuckaround.git "C:\Users\TEETHBOX\Desktop\NINE-UNKNOWN-MEN"
+cd "C:\Users\TEETHBOX\Desktop\NINE-UNKNOWN-MEN"
+git sparse-checkout init --cone
+git sparse-checkout set songs
+git checkout claude/deathcore-song-production-rp38dh
 ```
 
-`--depth 1` skips the older per-song audio-version history (several GB of
-superseded FLAC masters) and just pulls the current snapshot (~750MB,
-mostly the shipped masters in `songs/*/*.flac`/`.mp3`).
+Result: `C:\Users\TEETHBOX\Desktop\NINE-UNKNOWN-MEN\songs\<slug>\...` for
+each of the 8 songs. It's still a live repo — `git pull` from inside that
+folder picks up any later fixes (e.g. an Odin III octave-shift correction)
+without re-cloning.
+
+(Want the whole repo instead — source code, docs, corpus research included?
+Drop `--filter=blob:none`, `git sparse-checkout`, and just `git checkout`
+after a plain `git clone --depth 1 -b claude/deathcore-song-production-rp38dh
+https://github.com/HarrowHaus/Fuckaround.git "<path>"`.)
 
 ## 2. Install REAPER (if not already) and Reaper-MCP
 
