@@ -1,0 +1,46 @@
+where_light_comes_to_die — REAPER project notes
+============================================================
+
+DRUMS track — MIDI pitch map (mostly standard GM drum-map numbers):
+  35  kick (rim/alt)        42  closed hihat        51  ride
+  36  kick                  43  floor tom            52  china
+  38  snare                 47  tom (low-mid)         57  crash 2
+  47  tom (low-mid)         48  tom (hi-mid)          59  ride bell
+  49  crash 1               50  crash-1 CHOKE*        58  crash-2 CHOKE*
+  * 50 and 58 are choke/stop triggers (cymbal muted immediately), not
+    separate acoustic instruments — GM calls these High Tom / Vibraslap,
+    so remap or ignore them if your drum VST doesn't support chokes.
+Everything else lines up with plain GM (kick/snare/hihat/toms/crash/ride),
+so most drum VSTs (EZdrummer included) should read this sensibly with
+little or no remapping.
+
+GTR/LEAD tracks carry the real performance notes plus a low "keyswitch"
+lane that now targets Odin III's own keyswitches directly (mapped from
+its GUI keyswitch list): sus->Alternate Picked, pm->Alternate Mute
+Closed, pmx->Alternate Mute Dead, hammer->Hammer-On, pull->Pull-Off,
+nat_harm->Natural Harmonic, pinch->Pinch Harmonic, slide_in/slide_out/
+porta->*Auto Slide, fall->Slide Fast To Down, rake/scratch->Scrapes.
+
+A few rarer techniques (fret-mute, dive bombs, trills, the interval-
+specific bends) don't have a clean Odin III equivalent and are left on
+our own sample library's placeholder pitch (harmless — just won't
+trigger anything useful in Odin III; mute/delete or hand-fix those few
+notes in the piano roll if you use them).
+
+Octave caveat: the mapping assumes Odin III's keyswitch-list note names
+use the same middle-C reference as REAPER's default piano roll (C-1 =
+MIDI note 0). If everything fires one articulation-row off from what the
+GUI says, that's a one-octave (12-semitone) mismatch — flip
+ODIN3_OCTAVE_SHIFT in src/reaper_midi.py by +/-12 and regenerate.
+
+Odin III also has a velocity-triggered articulation mode (127=pinch
+harmonic, 126-35=alt picking, 34-25=palm mute, 24-15=palm mute closed,
+14-0=palm mute dead) that works without any keyswitch at all — an
+alternative worth trying if the keyswitch octave proves fiddly.
+
+BASS track is at its true composed pitch (no transpose applied) — should
+read correctly in EZbass or any standard bass VST/amp sim out of the box.
+
+SUB SYNTH / SUB DROP / FX TRIGGERS are one-shot/sustained hit markers for
+a synth (Odin 3, etc.) rather than a "played" part — treat as trigger
+points to design a sound around, not a melodic line.
