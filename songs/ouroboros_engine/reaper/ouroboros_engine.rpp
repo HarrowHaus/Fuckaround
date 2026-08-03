@@ -1,4 +1,4 @@
-<REAPER_PROJECT 0.1 "7.42/linux-x86_64" 1785715966
+<REAPER_PROJECT 0.1 "7.42/linux-x86_64" 1785716522
   <NOTES 0 2
   >
   RIPPLE 0 0
@@ -82,7 +82,7 @@
   MASTER_FX 1
   MASTER_SEL 0
   <MASTERPLAYSPEEDENV
-    EGUID {FCEE0DC5-F3F5-7A6E-BBD9-6545BDD39E32}
+    EGUID {E5C8B19C-7222-F35E-33B5-A385D331E474}
     ACT 0 -1
     VIS 0 1 1
     LANEHEIGHT 0 0
@@ -90,7 +90,7 @@
     DEFSHAPE 0 -1 -1
   >
   <TEMPOENVEX
-    EGUID {4F66E7D2-9B5D-F76D-B97D-B34B93D23D74}
+    EGUID {26028882-6002-56FA-7D40-E1BDBEF9731D}
     ACT 1 -1
     VIS 1 0 1
     LANEHEIGHT 0 0
@@ -104,29 +104,29 @@
     PT 115.439397693538 74.0000000000 1 262148 0 1 0 "" 0 169 0 ABBB
     PT 154.358316612457 160.0000000000 1 262148 0 1 0 "" 0 169 0 ABBB
   >
-  MARKER 1 0 coldopen 1 0 1 B {5D908F36-9F19-CA04-99F2-9DB2EEEB94DB} 0
+  MARKER 1 0 coldopen 1 0 1 B {42875ABC-5AF5-F033-ECE9-8C7B95E6C35A} 0
   MARKER 1 3 "" 1
-  MARKER 2 3 verseA 1 0 1 B {6989E6AA-C27C-D8F1-EAED-06C6AA2C593D} 0
+  MARKER 2 3 verseA 1 0 1 B {78C47923-7C3A-1653-BAF0-EEA16F52ACAE} 0
   MARKER 2 21 "" 1
-  MARKER 3 21 grooveB 1 0 1 B {E7BB92D7-3088-4441-39E6-116F1777A2A0} 0
+  MARKER 3 21 grooveB 1 0 1 B {DEA93A76-6217-529E-0D7B-2096F61D726D} 0
   MARKER 3 37.271 "" 1
-  MARKER 4 37.271 frontbreak 1 0 1 B {E80F3BD6-F1FB-62D6-0F4D-12FA5F2932BF} 0
+  MARKER 4 37.271 frontbreak 1 0 1 B {6E2F0E36-8A66-7F78-FEFB-B9EE731664DA} 0
   MARKER 4 60.686 "" 1
-  MARKER 5 60.686 verseA2 1 0 1 B {D76F9922-6067-A01D-E9A6-BD491CE29AAF} 0
+  MARKER 5 60.686 verseA2 1 0 1 B {2CD85CD7-93CE-924C-7A1C-BB97E06C9D60} 0
   MARKER 5 80.145 "" 1
-  MARKER 6 80.145 valley 1 0 1 B {4FECF551-F0DC-9518-6881-578CD4A004DA} 0
+  MARKER 6 80.145 valley 1 0 1 B {AC9B6C93-31E5-3958-781C-DC70A368130B} 0
   MARKER 6 108.381 "" 1
-  MARKER 7 108.381 riser 1 0 1 B {21FAAB3E-A3C3-4312-6173-0FCD1898B085} 0
+  MARKER 7 108.381 riser 1 0 1 B {A1619820-2398-39B2-9224-B3B6985C6276} 0
   MARKER 7 115.439 "" 1
-  MARKER 8 115.439 finalbreak 1 0 1 B {081BCC0A-4930-4B72-FBA5-9FE59B739379} 0
+  MARKER 8 115.439 finalbreak 1 0 1 B {F8245534-3DB0-22C3-FF72-0C9E7D3B6E3C} 0
   MARKER 8 154.358 "" 1
-  MARKER 9 154.358 tail 1 0 1 B {DD3229D6-F7F7-612F-CC90-3FDCA9BAC3B5} 0
+  MARKER 9 154.358 tail 1 0 1 B {F48F1271-3D13-27A2-617D-14F78C44E591} 0
   MARKER 9 157.358 "" 1
-  MARKER 10 157.358 out 1 0 1 B {1A6E2888-8278-F64E-57DE-ECFB93A380BC} 0
+  MARKER 10 157.358 out 1 0 1 B {9E3B23F4-6BFB-6781-FAF9-E3C6182B15BB} 0
   MARKER 10 160.583 "" 1
   <PROJBAY
   >
-  <TRACK {5F082146-6DFB-D000-9530-3F2201C34CE1}
+  <TRACK {2502E1E7-A60F-7EED-07C2-74A656C0F424}
     NAME "DRUMS (MIDI, GM-ish map — see notes.txt)"
     PEAKCOL 16576
     BEAT -1
@@ -147,7 +147,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {5F082146-6DFB-D000-9530-3F2201C34CE1}
+    TRACKID {2502E1E7-A60F-7EED-07C2-74A656C0F424}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -161,18 +161,18 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {72694250-D0BC-2554-86CD-ECD02740A55D}
+      IGUID {0FD4E0D9-E5EF-2E96-4160-2B8775A1CB9B}
       IID 1
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {E0B642E9-B874-B1D2-465A-09F3FB9E944C}
+      GUID {075AFD6F-399D-6DE8-14CA-8A4CBD0C7F56}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {7C8DE47E-5373-A616-CF66-05A773DB510B}
+        POOLEDEVTS {1304ACE1-9839-3004-225F-A9C65A0C9DA7}
         E 3840 90 34 6b
         E 640 80 34 00
         E 3200 90 31 6f
@@ -952,15 +952,15 @@
         E 7616 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {B298C56E-B4C5-067B-59BC-9C6364298EC4}
+        GUID {2507259E-E560-5F46-6E7B-6A366C969580}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 0
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {A50F2EBD-E799-B6C9-65E4-1DAA6C9E27E6}
-    NAME "GTR L (e.g. Odin III — remap keyswitches, see notes.txt)"
+  <TRACK {C8D2B242-E729-9B67-3B38-EE87EC1F3418}
+    NAME "GTR L (Odin III, keyswitches wired — see notes.txt)"
     PEAKCOL 16576
     BEAT -1
     AUTOMODE 0
@@ -980,7 +980,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {A50F2EBD-E799-B6C9-65E4-1DAA6C9E27E6}
+    TRACKID {C8D2B242-E729-9B67-3B38-EE87EC1F3418}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -994,24 +994,24 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {6D3F1ACC-E593-7BCC-4DF9-24CD21516BC3}
+      IGUID {B11C182E-E360-F2FD-1BF5-74F240492A64}
       IID 2
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {0F3EB9A0-4E92-213F-B839-4A59FC31D45F}
+      GUID {39125644-C5AE-3A9D-7BD5-969393D2DB89}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {4EB4DA14-3D38-DE3E-CA89-F95F561EE153}
-        E 0 90 08 64
+        POOLEDEVTS {499BBBA9-5058-C868-92E8-E16C150FE670}
+        E 0 90 13 64
         E 0 90 2b 62
-        E 38 80 08 00
+        E 38 80 13 00
         E 1114 80 2b 00
-        E 6470 90 16 64
-        E 39 80 16 00
+        E 6470 90 1e 64
+        E 39 80 1e 00
         E 19 90 1f 74
         E 204 80 1f 00
         E 36 90 1f 6d
@@ -1097,11 +1097,11 @@
         E 95 90 20 6d
         E 204 80 20 00
         E 35 90 20 6d
-        E 180 90 13 64
-        E 3 90 16 64
+        E 180 90 18 64
+        E 3 90 1e 64
         E 21 80 20 00
-        E 15 80 13 00
-        E 3 80 16 00
+        E 15 80 18 00
+        E 3 80 1e 00
         E 16 90 40 68
         E 0 90 46 69
         E 3 90 1f 6d
@@ -1201,11 +1201,11 @@
         E 93 90 20 6e
         E 204 80 20 00
         E 38 90 20 6b
-        E 181 90 13 64
-        E 2 90 16 64
+        E 181 90 18 64
+        E 2 90 1e 64
         E 21 80 20 00
-        E 15 80 13 00
-        E 2 80 16 00
+        E 15 80 18 00
+        E 2 80 1e 00
         E 17 90 41 6a
         E 2 90 47 66
         E 0 90 1f 6d
@@ -1447,91 +1447,91 @@
         E 108 90 20 73
         E 384 80 20 00
         E 95 90 20 6e
-        E 183 90 13 64
+        E 183 90 18 64
         E 21 80 20 00
-        E 17 80 13 00
+        E 17 80 18 00
         E 19 90 20 71
         E 1440 80 20 00
-        E 1622 90 16 64
-        E 38 80 16 00
+        E 1622 90 1e 64
+        E 38 80 1e 00
         E 19 90 20 74
         E 384 80 20 00
         E 100 90 20 73
-        E 181 90 13 64
+        E 181 90 18 64
         E 23 80 20 00
-        E 15 80 13 00
+        E 15 80 18 00
         E 20 90 20 73
         E 1440 80 20 00
-        E 1625 90 16 64
-        E 38 80 16 00
+        E 1625 90 1e 64
+        E 38 80 1e 00
         E 19 90 20 71
         E 384 80 20 00
         E 94 90 20 71
-        E 183 90 13 64
+        E 183 90 18 64
         E 21 80 20 00
-        E 17 80 13 00
+        E 17 80 18 00
         E 19 90 20 71
         E 1440 80 20 00
-        E 1622 90 16 64
-        E 39 80 16 00
+        E 1622 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 78
         E 384 80 20 00
         E 93 90 20 6d
-        E 187 90 13 64
+        E 187 90 18 64
         E 17 80 20 00
-        E 22 80 13 00
+        E 22 80 18 00
         E 19 90 20 6c
         E 1440 80 20 00
-        E 1622 90 16 64
-        E 38 80 16 00
+        E 1622 90 1e 64
+        E 38 80 1e 00
         E 19 90 20 74
         E 384 80 20 00
         E 94 90 20 73
-        E 184 90 13 64
+        E 184 90 18 64
         E 20 80 20 00
-        E 19 80 13 00
+        E 19 80 18 00
         E 19 90 20 72
         E 1440 80 20 00
-        E 1622 90 16 64
-        E 1 90 13 64
-        E 38 80 16 00
-        E 1 80 13 00
+        E 1622 90 1e 64
+        E 1 90 18 64
+        E 38 80 1e 00
+        E 1 80 18 00
         E 15 90 47 68
         E 3 90 20 79
         E 1 90 41 64
         E 383 80 20 00
-        E 34 90 16 64
-        E 39 80 16 00
+        E 34 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 74
-        E 182 90 13 64
+        E 182 90 18 64
         E 22 80 20 00
-        E 17 80 13 00
+        E 17 80 18 00
         E 19 90 20 6e
         E 1440 80 20 00
         E 241 80 47 00
         E 4 80 41 00
-        E 1382 90 16 64
-        E 38 80 16 00
+        E 1382 90 1e 64
+        E 38 80 1e 00
         E 20 90 20 77
         E 384 80 20 00
         E 96 90 20 6d
-        E 178 90 13 64
+        E 178 90 18 64
         E 26 80 20 00
-        E 13 80 13 00
+        E 13 80 18 00
         E 19 90 20 70
         E 1440 80 20 00
-        E 1623 90 16 64
-        E 38 80 16 00
+        E 1623 90 1e 64
+        E 38 80 1e 00
         E 19 90 20 72
         E 384 80 20 00
         E 96 90 20 70
-        E 186 90 13 64
+        E 186 90 18 64
         E 18 80 20 00
-        E 21 80 13 00
+        E 21 80 18 00
         E 19 90 20 6c
         E 1440 80 20 00
-        E 1621 90 16 64
-        E 38 80 16 00
+        E 1621 90 1e 64
+        E 38 80 1e 00
         E 19 90 24 72
         E 384 80 24 00
         E 95 90 23 6f
@@ -1800,110 +1800,110 @@
         E 612 80 1e 00
         E 103 90 1e 72
         E 612 80 1e 00
-        E 51 90 13 64
-        E 39 80 13 00
+        E 51 90 18 64
+        E 39 80 18 00
         E 19 90 1e 6e
         E 816 80 1e 00
         E 148 90 29 74
         E 1224 80 29 00
-        E 154 90 16 64
-        E 38 80 16 00
+        E 154 90 1e 64
+        E 38 80 1e 00
         E 19 90 1e 74
         E 612 80 1e 00
         E 110 90 1e 73
         E 612 80 1e 00
-        E 49 90 13 64
-        E 39 80 13 00
+        E 49 90 18 64
+        E 39 80 18 00
         E 19 90 1e 6f
         E 816 80 1e 00
         E 145 90 29 74
-        E 426 90 0a 64
-        E 38 80 0a 00
+        E 426 90 16 64
+        E 38 80 16 00
         E 19 90 41 76
         E 741 80 29 00
-        E 160 90 16 64
-        E 39 80 16 00
+        E 160 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 74
         E 1 80 41 00
         E 611 80 1e 00
         E 108 90 1e 70
         E 612 80 1e 00
-        E 48 90 13 64
-        E 39 80 13 00
+        E 48 90 18 64
+        E 39 80 18 00
         E 19 90 1e 74
         E 816 80 1e 00
         E 143 90 29 72
         E 1224 80 29 00
-        E 162 90 16 64
-        E 39 80 16 00
+        E 162 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 78
         E 612 80 1e 00
         E 106 90 1e 76
         E 612 80 1e 00
-        E 48 90 13 64
-        E 38 80 13 00
+        E 48 90 18 64
+        E 38 80 18 00
         E 19 90 1e 71
         E 816 80 1e 00
         E 148 90 29 76
-        E 419 90 0a 64
-        E 38 80 0a 00
+        E 419 90 16 64
+        E 38 80 16 00
         E 19 90 41 78
         E 748 80 29 00
-        E 158 90 16 64
-        E 39 80 16 00
+        E 158 90 1e 64
+        E 39 80 1e 00
         E 15 80 41 00
         E 4 90 1e 77
         E 612 80 1e 00
         E 105 90 1e 73
         E 612 80 1e 00
-        E 54 90 13 64
-        E 39 80 13 00
+        E 54 90 18 64
+        E 39 80 18 00
         E 19 90 1e 74
         E 816 80 1e 00
         E 139 90 29 6e
         E 1224 80 29 00
-        E 163 90 16 64
-        E 39 80 16 00
+        E 163 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 73
         E 612 80 1e 00
         E 104 90 1e 70
         E 612 80 1e 00
-        E 49 90 13 64
-        E 39 80 13 00
+        E 49 90 18 64
+        E 39 80 18 00
         E 19 90 1e 6e
         E 816 80 1e 00
         E 145 90 29 73
-        E 422 90 0a 64
-        E 38 80 0a 00
+        E 422 90 16 64
+        E 38 80 16 00
         E 19 90 41 77
         E 745 80 29 00
-        E 163 90 16 64
-        E 38 80 16 00
+        E 163 90 1e 64
+        E 38 80 1e 00
         E 14 80 41 00
         E 5 90 1e 7b
         E 612 80 1e 00
         E 105 90 1e 6e
         E 612 80 1e 00
-        E 51 90 13 64
-        E 39 80 13 00
+        E 51 90 18 64
+        E 39 80 18 00
         E 19 90 1e 74
         E 816 80 1e 00
         E 144 90 29 70
         E 1224 80 29 00
-        E 158 90 16 64
-        E 38 80 16 00
+        E 158 90 1e 64
+        E 38 80 1e 00
         E 19 90 1e 78
         E 612 80 1e 00
         E 110 90 1e 74
         E 612 80 1e 00
-        E 50 90 13 64
-        E 39 80 13 00
+        E 50 90 18 64
+        E 39 80 18 00
         E 19 90 1e 72
         E 816 80 1e 00
         E 144 90 29 73
         E 1224 80 29 00
-        E 155 90 16 64
-        E 38 80 16 00
+        E 155 90 1e 64
+        E 38 80 1e 00
         E 19 90 29 75
         E 480 80 29 00
         E 1443 90 29 77
@@ -1921,15 +1921,15 @@
         E 7969 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {4CAD6A31-DAE7-BE9C-0BE2-4089C8A3FDFC}
+        GUID {C51AABB8-1D30-C19D-8395-5C9779724620}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 1
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {ACF5750E-CFF4-4A9E-171D-F42AF87ABF86}
-    NAME "GTR R (e.g. Odin III — remap keyswitches, see notes.txt)"
+  <TRACK {ACDFEA6C-09B7-197F-F7A0-7A65DAB7C76B}
+    NAME "GTR R (Odin III, keyswitches wired — see notes.txt)"
     PEAKCOL 16576
     BEAT -1
     AUTOMODE 0
@@ -1949,7 +1949,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {ACF5750E-CFF4-4A9E-171D-F42AF87ABF86}
+    TRACKID {ACDFEA6C-09B7-197F-F7A0-7A65DAB7C76B}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -1963,20 +1963,20 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {08EF5164-5AE3-0325-43FB-A9752E0CBBBA}
+      IGUID {E9616A77-4887-0452-C064-0183C4782650}
       IID 3
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {7F8C93A8-68E4-E1DE-36D6-43EBD9AAE76A}
+      GUID {9C616461-7916-4A5C-7E16-04FF33B3F0F8}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {9012B6D0-2265-765A-C35B-A89AE96AA581}
-        E 7622 90 16 64
-        E 38 80 16 00
+        POOLEDEVTS {386BBC2C-92F0-241E-EB9D-2C8CFD1C3600}
+        E 7622 90 1e 64
+        E 38 80 1e 00
         E 20 90 1f 74
         E 203 80 1f 00
         E 37 90 1f 6b
@@ -2062,15 +2062,15 @@
         E 101 90 20 6b
         E 204 80 20 00
         E 35 90 20 6c
-        E 181 90 13 64
+        E 181 90 18 64
         E 22 80 20 00
-        E 17 80 13 00
+        E 17 80 18 00
         E 16 90 1f 6e
         E 3 90 40 62
         E 2 90 46 5e
         E 607 80 1f 00
-        E 55 90 16 64
-        E 38 80 16 00
+        E 55 90 1e 64
+        E 38 80 1e 00
         E 20 90 24 70
         E 204 80 24 00
         E 34 90 24 6d
@@ -2166,11 +2166,11 @@
         E 99 90 20 68
         E 204 80 20 00
         E 32 90 20 6d
-        E 183 90 13 64
-        E 1 90 16 64
+        E 183 90 18 64
+        E 1 90 1e 64
         E 20 80 20 00
-        E 17 80 13 00
-        E 2 80 16 00
+        E 17 80 18 00
+        E 2 80 1e 00
         E 17 90 41 66
         E 0 90 47 62
         E 2 90 1f 70
@@ -2412,91 +2412,91 @@
         E 106 90 20 73
         E 384 80 20 00
         E 96 90 20 73
-        E 182 90 13 64
+        E 182 90 18 64
         E 22 80 20 00
-        E 16 80 13 00
+        E 16 80 18 00
         E 19 90 20 6e
         E 1440 80 20 00
-        E 1624 90 16 64
-        E 38 80 16 00
+        E 1624 90 1e 64
+        E 38 80 1e 00
         E 20 90 20 71
         E 384 80 20 00
         E 98 90 20 71
-        E 178 90 13 64
+        E 178 90 18 64
         E 26 80 20 00
-        E 13 80 13 00
+        E 13 80 18 00
         E 19 90 20 72
         E 1440 80 20 00
-        E 1625 90 16 64
-        E 39 80 16 00
+        E 1625 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 77
         E 384 80 20 00
         E 93 90 20 73
-        E 182 90 13 64
+        E 182 90 18 64
         E 22 80 20 00
-        E 16 80 13 00
+        E 16 80 18 00
         E 20 90 20 6d
         E 1440 80 20 00
-        E 1626 90 16 64
-        E 39 80 16 00
+        E 1626 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 79
         E 384 80 20 00
         E 96 90 20 6d
-        E 178 90 13 64
+        E 178 90 18 64
         E 26 80 20 00
-        E 12 80 13 00
+        E 12 80 18 00
         E 19 90 20 74
         E 1440 80 20 00
-        E 1624 90 16 64
-        E 39 80 16 00
+        E 1624 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 77
         E 384 80 20 00
         E 94 90 20 6e
-        E 185 90 13 64
+        E 185 90 18 64
         E 19 80 20 00
-        E 20 80 13 00
+        E 20 80 18 00
         E 19 90 20 73
         E 1440 80 20 00
-        E 1622 90 16 64
-        E 1 90 13 64
-        E 37 80 16 00
-        E 1 80 13 00
+        E 1622 90 1e 64
+        E 1 90 18 64
+        E 37 80 1e 00
+        E 1 80 18 00
         E 17 90 47 5f
         E 2 90 20 77
         E 1 90 41 63
         E 382 80 20 00
-        E 40 90 16 64
-        E 39 80 16 00
+        E 40 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 73
-        E 181 90 13 64
+        E 181 90 18 64
         E 23 80 20 00
-        E 15 80 13 00
+        E 15 80 18 00
         E 19 90 20 70
         E 1440 80 20 00
         E 239 80 47 00
         E 3 80 41 00
-        E 1382 90 16 64
-        E 39 80 16 00
+        E 1382 90 1e 64
+        E 39 80 1e 00
         E 19 90 20 72
         E 384 80 20 00
         E 95 90 20 6c
-        E 179 90 13 64
+        E 179 90 18 64
         E 25 80 20 00
-        E 14 80 13 00
+        E 14 80 18 00
         E 19 90 20 6d
         E 1440 80 20 00
-        E 1625 90 16 64
-        E 38 80 16 00
+        E 1625 90 1e 64
+        E 38 80 1e 00
         E 20 90 20 78
         E 384 80 20 00
         E 93 90 20 74
-        E 183 90 13 64
+        E 183 90 18 64
         E 21 80 20 00
-        E 17 80 13 00
+        E 17 80 18 00
         E 20 90 20 73
         E 1440 80 20 00
-        E 1624 90 16 64
-        E 39 80 16 00
+        E 1624 90 1e 64
+        E 39 80 1e 00
         E 19 90 24 74
         E 384 80 24 00
         E 96 90 23 69
@@ -2765,98 +2765,98 @@
         E 612 80 1e 00
         E 110 90 1e 75
         E 612 80 1e 00
-        E 47 90 13 64
-        E 39 80 13 00
+        E 47 90 18 64
+        E 39 80 18 00
         E 19 90 1e 70
         E 816 80 1e 00
         E 148 90 29 72
         E 1224 80 29 00
-        E 156 90 16 64
-        E 38 80 16 00
+        E 156 90 1e 64
+        E 38 80 1e 00
         E 19 90 1e 76
         E 612 80 1e 00
         E 109 90 1e 72
         E 612 80 1e 00
-        E 50 90 13 64
-        E 38 80 13 00
+        E 50 90 18 64
+        E 38 80 18 00
         E 20 90 1e 6e
         E 816 80 1e 00
         E 141 90 29 70
         E 1224 80 29 00
-        E 161 90 16 64
-        E 39 80 16 00
+        E 161 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 7b
         E 612 80 1e 00
         E 106 90 1e 74
         E 612 80 1e 00
-        E 53 90 13 64
-        E 39 80 13 00
+        E 53 90 18 64
+        E 39 80 18 00
         E 19 90 1e 6e
         E 816 80 1e 00
         E 140 90 29 76
         E 1224 80 29 00
-        E 164 90 16 64
-        E 38 80 16 00
+        E 164 90 1e 64
+        E 38 80 1e 00
         E 19 90 1e 79
         E 612 80 1e 00
         E 108 90 1e 74
         E 612 80 1e 00
-        E 48 90 13 64
-        E 39 80 13 00
+        E 48 90 18 64
+        E 39 80 18 00
         E 19 90 1e 74
         E 816 80 1e 00
         E 142 90 29 71
         E 1224 80 29 00
-        E 160 90 16 64
-        E 39 80 16 00
+        E 160 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 79
         E 612 80 1e 00
         E 105 90 1e 74
         E 612 80 1e 00
-        E 54 90 13 64
-        E 39 80 13 00
+        E 54 90 18 64
+        E 39 80 18 00
         E 19 90 1e 73
         E 816 80 1e 00
         E 140 90 29 71
         E 1224 80 29 00
-        E 160 90 16 64
-        E 39 80 16 00
+        E 160 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 77
         E 612 80 1e 00
         E 108 90 1e 70
         E 612 80 1e 00
-        E 49 90 13 64
-        E 38 80 13 00
+        E 49 90 18 64
+        E 38 80 18 00
         E 19 90 1e 6f
         E 816 80 1e 00
         E 147 90 29 72
         E 1224 80 29 00
-        E 157 90 16 64
-        E 39 80 16 00
+        E 157 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 79
         E 612 80 1e 00
         E 109 90 1e 6f
         E 612 80 1e 00
-        E 49 90 13 64
-        E 38 80 13 00
+        E 49 90 18 64
+        E 38 80 18 00
         E 20 90 1e 72
         E 816 80 1e 00
         E 144 90 29 6e
         E 1224 80 29 00
-        E 156 90 16 64
-        E 39 80 16 00
+        E 156 90 1e 64
+        E 39 80 1e 00
         E 19 90 1e 78
         E 612 80 1e 00
         E 110 90 1e 74
         E 612 80 1e 00
-        E 53 90 13 64
-        E 38 80 13 00
+        E 53 90 18 64
+        E 38 80 18 00
         E 19 90 1e 71
         E 816 80 1e 00
         E 144 90 29 70
         E 1224 80 29 00
-        E 157 90 16 64
-        E 38 80 16 00
+        E 157 90 1e 64
+        E 38 80 1e 00
         E 20 90 29 7a
         E 480 80 29 00
         E 1437 90 29 79
@@ -2874,14 +2874,14 @@
         E 7967 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {CE86288A-F29A-6EDE-17A1-582793D779B4}
+        GUID {D5A3C866-4EF6-5E1B-A18A-0F84C3220979}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 2
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {CF377C31-8579-4C83-F79F-64D2C7C9BB8A}
+  <TRACK {54EEBCB2-616C-C584-ADAA-A9F684597DB7}
     NAME "LEAD (Odin III)"
     PEAKCOL 16576
     BEAT -1
@@ -2902,7 +2902,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {CF377C31-8579-4C83-F79F-64D2C7C9BB8A}
+    TRACKID {54EEBCB2-616C-C584-ADAA-A9F684597DB7}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -2916,20 +2916,20 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {3904D48C-2114-D563-99C7-B86DBD27978A}
+      IGUID {1BF972FD-CE53-FD21-B822-184624C39F09}
       IID 4
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {D39499D1-4782-AB75-A47B-D6BBA2B6B369}
+      GUID {15D879DD-195E-B96D-6238-8A59A0FFD5D1}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {97DEC060-E129-53FD-059C-F98544ACCD25}
-        E 115142 90 13 64
-        E 38 80 13 00
+        POOLEDEVTS {493E6284-54F9-E890-2F26-5ABB2E4170A1}
+        E 115142 90 18 64
+        E 38 80 18 00
         E 19 90 3c 5c
         E 480 90 3b 5c
         E 577 80 3c 00
@@ -3033,14 +3033,14 @@
         E 71615 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {C0393BEC-2B6B-E403-5875-D413B357482C}
+        GUID {E4730217-79A6-D350-1ACE-526454097A15}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 3
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {01A678F8-E168-5D42-88A5-8BC6AC22C0E9}
+  <TRACK {CB81110F-AA91-5486-5C6B-564E0EEF6BE8}
     NAME BASS
     PEAKCOL 16576
     BEAT -1
@@ -3061,7 +3061,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {01A678F8-E168-5D42-88A5-8BC6AC22C0E9}
+    TRACKID {CB81110F-AA91-5486-5C6B-564E0EEF6BE8}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -3075,18 +3075,18 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {4C2CDA19-2353-EF7F-27B7-DE7E04354C6A}
+      IGUID {9C0F507A-3367-7AA4-D2E7-CCB070F26448}
       IID 5
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {67466EB5-0024-77E8-B64C-8866AC4C56C2}
+      GUID {0F5A0238-3C82-BA0D-B310-E963FBEE9DC2}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {6B3EDBB1-7398-4808-911E-99580F6DDC9E}
+        POOLEDEVTS {A60ECF16-F21C-F98E-78E0-1B1E4286617F}
         E 7679 90 1c 71
         E 224 80 1c 00
         E 17 90 1c 72
@@ -3976,14 +3976,14 @@
         E 7919 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {E70E3DDA-C2D5-7D9A-C954-EAED3C67536B}
+        GUID {A205B01D-3D69-0F0A-B76F-7B7DC5FFECFD}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 4
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {33A6252C-9CF8-16AC-4626-B474CAFA04AA}
+  <TRACK {65084DD9-9E49-BE6F-8318-14AFB3C0D147}
     NAME "SUB SYNTH (MIDI)"
     PEAKCOL 16576
     BEAT -1
@@ -4004,7 +4004,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {33A6252C-9CF8-16AC-4626-B474CAFA04AA}
+    TRACKID {65084DD9-9E49-BE6F-8318-14AFB3C0D147}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -4018,18 +4018,18 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {F2421DFF-69FF-BCFA-B560-D508300752C4}
+      IGUID {FBB801CD-9626-0D98-81B8-91A4C231584A}
       IID 6
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {154A3FD4-5636-8E3C-29F8-0CE5CFB47F34}
+      GUID {482A2FE4-983D-1CC2-1305-5923D56E1ECB}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {5E46631F-1F95-59C6-DDA8-0C59E7675E12}
+        POOLEDEVTS {47CBE551-F2C5-E513-E946-4DAD7C91248A}
         E 7680 90 1f 6e
         E 3686 80 1f 00
         E 154 90 1f 6e
@@ -4159,14 +4159,14 @@
         E 7680 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {C6B8A427-9076-0C39-EF95-A82BA6C226F4}
+        GUID {ACD1EFD4-AE49-7139-49CD-F36AB8F213D1}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 5
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {2C1A68D9-63FA-C3D5-85CF-4CE51C70A363}
+  <TRACK {A8500987-CAC1-729A-3F4D-F6C4AF0FBEC6}
     NAME "SUB DROP TRIGGERS (one-shot hits)"
     PEAKCOL 16576
     BEAT -1
@@ -4187,7 +4187,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {2C1A68D9-63FA-C3D5-85CF-4CE51C70A363}
+    TRACKID {A8500987-CAC1-729A-3F4D-F6C4AF0FBEC6}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -4201,18 +4201,18 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {662404A3-2218-36C2-E239-A0B701DAF0BE}
+      IGUID {B5129AC2-8EBA-565E-7318-C2E9BBF57E7B}
       IID 7
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {1A98AC40-456D-62C7-263E-FCF1197C1C49}
+      GUID {53798838-D030-C4D9-9268-76C8C3DDDDF4}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {A776ECB4-C5B0-C621-3C02-65561F0D53BE}
+        POOLEDEVTS {1CE8739B-941F-D486-850F-FFA743C279A5}
         E 84480 90 1f 78
         E 1919 80 1f 00
         E 113281 90 1d 7c
@@ -4220,14 +4220,14 @@
         E 59712 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {F3AD22B0-9639-50EE-ACA5-EF2F1690A10B}
+        GUID {DD68EA37-FF78-A403-987C-B3883422B4F3}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 6
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1
       >
     >
   >
-  <TRACK {CA1A7DFD-6B38-8AED-B2D3-B3795EF074E2}
+  <TRACK {101EC137-FCB2-E329-FD3F-FD8F66B7B3A1}
     NAME "FX TRIGGERS (impact/riser one-shots)"
     PEAKCOL 16576
     BEAT -1
@@ -4248,7 +4248,7 @@
     INQ 0 0 0 0.5 100 0 0 100
     NCHAN 2
     FX 1
-    TRACKID {CA1A7DFD-6B38-8AED-B2D3-B3795EF074E2}
+    TRACKID {101EC137-FCB2-E329-FD3F-FD8F66B7B3A1}
     PERF 0
     MIDIOUT -1
     MAINSEND 1 0
@@ -4262,18 +4262,18 @@
       FADEOUT 1 0 0 1 0 0 0
       MUTE 0 0
       SEL 0
-      IGUID {2AEA4C49-BA1F-6883-8C1B-420175BA1D9D}
+      IGUID {633883EE-983B-A067-15BE-53ADE80369DC}
       IID 8
       NAME ""
       VOLPAN 1 0 1 -1
       SOFFS 0 0
       PLAYRATE 1 1 0 -1 0 0.0025
       CHANMODE 0
-      GUID {E86990A0-4C85-BD1A-80CB-AF53309F446D}
+      GUID {834122F1-E9F2-FB56-A870-7927A78B5DC7}
       <SOURCE MIDI
         HASDATA 1 960 QN
         CCINTERP 32
-        POOLEDEVTS {A0276828-B8CC-42AF-51D3-7D627E4262BE}
+        POOLEDEVTS {D59D57B0-153D-CF97-686B-7B66BBE10A36}
         E 0 90 00 64
         E 3840 80 00 00
         E 80640 90 00 6e
@@ -4285,7 +4285,7 @@
         E 58176 b0 7b 00
         CCINTERP 32
         CHASE_CC_TAKEOFFS 1
-        GUID {5380C911-29D4-FBF5-7229-85E3CFDD8117}
+        GUID {8F6C96C1-AD47-8BBD-E4DB-FAFE448ED51E}
         IGNTEMPO 0 120 4 4
         SRCCOLOR 7
         EVTFILTER 0 -1 -1 -1 -1 0 0 0 0 -1 -1 -1 -1 0 -1 0 -1 -1

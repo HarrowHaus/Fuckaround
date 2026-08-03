@@ -38,8 +38,8 @@ ORDER = ["drums", "gtr_l", "gtr_r", "gtr_l2", "gtr_r2", "lead", "bass",
         "subbass", "subdrop", "fx", "strings", "choir"]
 NAMES = {
     "drums": "DRUMS (MIDI, GM-ish map — see notes.txt)",
-    "gtr_l": "GTR L (e.g. Odin III — remap keyswitches, see notes.txt)",
-    "gtr_r": "GTR R (e.g. Odin III — remap keyswitches, see notes.txt)",
+    "gtr_l": "GTR L (Odin III, keyswitches wired — see notes.txt)",
+    "gtr_r": "GTR R (Odin III, keyswitches wired — see notes.txt)",
     "gtr_l2": "GTR L take 2 (Odin III)", "gtr_r2": "GTR R take 2 (Odin III)",
     "lead": "LEAD (Odin III)", "bass": "BASS",
     "subbass": "SUB SYNTH (MIDI)",
@@ -49,13 +49,52 @@ NAMES = {
 }
 KEYSWITCH_TRACKS = {"gtr_l", "gtr_r", "gtr_l2", "gtr_r2", "lead"}
 
-# Fill this in once you've pulled Odin III's real keyswitch table (its
-# keyswitch-list toggle, top right of the GUI, or the manual) and the
-# low keyswitch lane will translate onto Odin III's actual notes instead
-# of our own sample library's. Keys are our internal articulation names
-# (see render.KS) -> Odin III's MIDI note for that articulation, e.g.
-# ODIN3_KS_MAP = {"pm": 24, "pmx": 25, "sus": 36, "hammer": 38, ...}
-ODIN3_KS_MAP = {}
+_NOTE_PC = {"C": 0, "C#": 1, "D": 2, "D#": 3, "E": 4, "F": 5,
+            "F#": 6, "G": 7, "G#": 8, "A": 9, "A#": 10, "B": 11}
+
+
+def _note(name):
+    """'C-1' -> 0, 'C#0' -> 13, 'A1' -> 33 ... standard (octave+1)*12+pc,
+    i.e. C-1 = MIDI note 0 (REAPER's own default piano-roll naming).
+    Odin III's own keyswitch-list display might use a different middle-C
+    reference (common on Kontakt-family instruments, often one octave
+    lower) -- if every keyswitch below fires the wrong articulation by
+    exactly one octave's worth, that's the cause; ODIN3_OCTAVE_SHIFT is
+    the one-line fix."""
+    if name[-2] == "-":
+        pc_name, octave = name[:-2], int(name[-2:])
+    else:
+        pc_name, octave = name[:-1], int(name[-1])
+    return (octave + 1) * 12 + _NOTE_PC[pc_name]
+
+
+ODIN3_OCTAVE_SHIFT = 0
+
+# Read directly off Odin III's own keyswitch list (Solemn Tones), three
+# keyswitch octaves C-1..B1. Mapped onto our internal articulation names
+# (render.KS) wherever a clean match exists. Deliberately left unmapped
+# (falls back to our own placeholder pitch) where Odin's vocabulary
+# doesn't line up cleanly: fretmute, dive, trill_ht/wt/m3/M3, bend_ht,
+# bend_wh, ubend -- Odin's "Bend Up Fast/Slow" differentiate by picking
+# speed, not by interval size the way our bend/trill tags do, so forcing
+# a match would just be a guess dressed up as data.
+ODIN3_KS_MAP = {
+    "sus":       _note("C1"),    # Alternate Picked
+    "pm":        _note("F#1"),   # Alternate Mute Closed (standard palm mute)
+    "pmx":       _note("A1"),    # Alternate Mute Dead (tightest chug)
+    "hammer":    _note("C#0"),   # Hammer-On
+    "pull":      _note("D0"),    # Pull-Off
+    "legato":    _note("C#0"),   # no direct match -> nearest is Hammer-On
+    "slide_in":  _note("F#0"),   # *Auto Slide
+    "slide_out": _note("F#0"),   # *Auto Slide (Odin doesn't split in/out)
+    "porta":     _note("F#0"),   # *Auto Slide
+    "nat_harm":  _note("A0"),    # Natural Harmonic
+    "pinch":     _note("A#0"),   # Pinch Harmonic
+    "fall":      _note("F#-1"),  # Slide Fast To Down (closest to a fall-off)
+    "rake":      _note("G0"),    # Scrapes
+    "scratch":   _note("G0"),    # Scrapes (Odin has only one scrape artic.)
+}
+ODIN3_KS_MAP = {k: v + ODIN3_OCTAVE_SHIFT for k, v in ODIN3_KS_MAP.items()}
 _PITCH_TO_KS_NAME = {v: k for k, v in rnd.KS.items()}
 
 
@@ -113,21 +152,29 @@ little or no remapping.
 """
 
 GTR_NOTES = """\
-GTR/LEAD tracks carry the real performance notes plus a handful of very
-low "keyswitch" notes (pitch 5-29, plus a few up at 103-114 for pitch-bend
-articulations like dive bombs and trills) — these encode articulation
-(palm mute type, hammer-on/pull-off, pinch/natural harmonic, slide, rake,
-fret-mute, etc.) against OUR OWN sample library's keyswitch layout, not
-Odin III's. They will NOT trigger the right articulations in Odin III as
-exported — they're a reference/placeholder lane (easy to spot: far below
-the lowest played note).
+GTR/LEAD tracks carry the real performance notes plus a low "keyswitch"
+lane that now targets Odin III's own keyswitches directly (mapped from
+its GUI keyswitch list): sus->Alternate Picked, pm->Alternate Mute
+Closed, pmx->Alternate Mute Dead, hammer->Hammer-On, pull->Pull-Off,
+nat_harm->Natural Harmonic, pinch->Pinch Harmonic, slide_in/slide_out/
+porta->*Auto Slide, fall->Slide Fast To Down, rake/scratch->Scrapes.
 
-To make them work: open Odin III's keyswitch list (top-right toggle) or
-its manual, note the real MIDI numbers per articulation, and send them
-back — the export can be regenerated with a translation table so the low
-lane maps onto Odin III's actual keyswitches instead of ours. Some
-keyswitch libraries also let you remap THEIR keys to match ours instead —
-either direction works, whichever is less fiddly on your end.
+A few rarer techniques (fret-mute, dive bombs, trills, the interval-
+specific bends) don't have a clean Odin III equivalent and are left on
+our own sample library's placeholder pitch (harmless — just won't
+trigger anything useful in Odin III; mute/delete or hand-fix those few
+notes in the piano roll if you use them).
+
+Octave caveat: the mapping assumes Odin III's keyswitch-list note names
+use the same middle-C reference as REAPER's default piano roll (C-1 =
+MIDI note 0). If everything fires one articulation-row off from what the
+GUI says, that's a one-octave (12-semitone) mismatch — flip
+ODIN3_OCTAVE_SHIFT in src/reaper_midi.py by +/-12 and regenerate.
+
+Odin III also has a velocity-triggered articulation mode (127=pinch
+harmonic, 126-35=alt picking, 34-25=palm mute, 24-15=palm mute closed,
+14-0=palm mute dead) that works without any keyswitch at all — an
+alternative worth trying if the keyswitch octave proves fiddly.
 """
 
 BASS_NOTES = """\
