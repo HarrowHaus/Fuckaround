@@ -38,15 +38,25 @@ ORDER = ["drums", "gtr_l", "gtr_r", "gtr_l2", "gtr_r2", "lead", "bass",
         "subbass", "subdrop", "fx", "strings", "choir"]
 NAMES = {
     "drums": "DRUMS (MIDI, GM-ish map — see notes.txt)",
-    "gtr_l": "GTR L", "gtr_r": "GTR R",
-    "gtr_l2": "GTR L (take 2)", "gtr_r2": "GTR R (take 2)",
-    "lead": "LEAD", "bass": "BASS",
-    "subbass": "SUB SYNTH (MIDI — e.g. Odin 3)",
+    "gtr_l": "GTR L (e.g. Odin III — remap keyswitches, see notes.txt)",
+    "gtr_r": "GTR R (e.g. Odin III — remap keyswitches, see notes.txt)",
+    "gtr_l2": "GTR L take 2 (Odin III)", "gtr_r2": "GTR R take 2 (Odin III)",
+    "lead": "LEAD (Odin III)", "bass": "BASS",
+    "subbass": "SUB SYNTH (MIDI)",
     "subdrop": "SUB DROP TRIGGERS (one-shot hits)",
     "fx": "FX TRIGGERS (impact/riser one-shots)",
     "strings": "STRINGS/DRONE (optional)", "choir": "CHOIR (optional)",
 }
 KEYSWITCH_TRACKS = {"gtr_l", "gtr_r", "gtr_l2", "gtr_r2", "lead"}
+
+# Fill this in once you've pulled Odin III's real keyswitch table (its
+# keyswitch-list toggle, top right of the GUI, or the manual) and the
+# low keyswitch lane will translate onto Odin III's actual notes instead
+# of our own sample library's. Keys are our internal articulation names
+# (see render.KS) -> Odin III's MIDI note for that articulation, e.g.
+# ODIN3_KS_MAP = {"pm": 24, "pmx": 25, "sus": 36, "hammer": 38, ...}
+ODIN3_KS_MAP = {}
+_PITCH_TO_KS_NAME = {v: k for k, v in rnd.KS.items()}
 
 
 def lua_quote(s):
@@ -60,6 +70,9 @@ def note_events(score, track, transpose=0, keyswitches=False):
     notes = score.tracks[track].notes
     if keyswitches:
         for (st, du, pi, ve) in rnd.guitar_keyswitches(notes):
+            if ODIN3_KS_MAP:
+                name = _PITCH_TO_KS_NAME.get(pi)
+                pi = ODIN3_KS_MAP.get(name, pi)
             evs.append((score.beats_to_seconds(st),
                         score.beats_to_seconds(st + du), pi, ve))
     for n in notes:
@@ -101,11 +114,20 @@ little or no remapping.
 
 GTR_NOTES = """\
 GTR/LEAD tracks carry the real performance notes plus a handful of very
-low "keyswitch" notes (pitch 5-29) — these trigger articulation switches
-(palm mute, technique) on our own sample library and are meaningless to
-most guitar VSTs/amp sims. They're easy to spot in the piano roll (they
-sit far below the lowest played note) — mute or delete that lane if your
-plugin doesn't use keyswitches, or remap them if it does.
+low "keyswitch" notes (pitch 5-29, plus a few up at 103-114 for pitch-bend
+articulations like dive bombs and trills) — these encode articulation
+(palm mute type, hammer-on/pull-off, pinch/natural harmonic, slide, rake,
+fret-mute, etc.) against OUR OWN sample library's keyswitch layout, not
+Odin III's. They will NOT trigger the right articulations in Odin III as
+exported — they're a reference/placeholder lane (easy to spot: far below
+the lowest played note).
+
+To make them work: open Odin III's keyswitch list (top-right toggle) or
+its manual, note the real MIDI numbers per articulation, and send them
+back — the export can be regenerated with a translation table so the low
+lane maps onto Odin III's actual keyswitches instead of ours. Some
+keyswitch libraries also let you remap THEIR keys to match ours instead —
+either direction works, whichever is less fiddly on your end.
 """
 
 BASS_NOTES = """\

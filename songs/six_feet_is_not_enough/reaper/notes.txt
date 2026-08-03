@@ -15,11 +15,20 @@ so most drum VSTs (EZdrummer included) should read this sensibly with
 little or no remapping.
 
 GTR/LEAD tracks carry the real performance notes plus a handful of very
-low "keyswitch" notes (pitch 5-29) — these trigger articulation switches
-(palm mute, technique) on our own sample library and are meaningless to
-most guitar VSTs/amp sims. They're easy to spot in the piano roll (they
-sit far below the lowest played note) — mute or delete that lane if your
-plugin doesn't use keyswitches, or remap them if it does.
+low "keyswitch" notes (pitch 5-29, plus a few up at 103-114 for pitch-bend
+articulations like dive bombs and trills) — these encode articulation
+(palm mute type, hammer-on/pull-off, pinch/natural harmonic, slide, rake,
+fret-mute, etc.) against OUR OWN sample library's keyswitch layout, not
+Odin III's. They will NOT trigger the right articulations in Odin III as
+exported — they're a reference/placeholder lane (easy to spot: far below
+the lowest played note).
+
+To make them work: open Odin III's keyswitch list (top-right toggle) or
+its manual, note the real MIDI numbers per articulation, and send them
+back — the export can be regenerated with a translation table so the low
+lane maps onto Odin III's actual keyswitches instead of ours. Some
+keyswitch libraries also let you remap THEIR keys to match ours instead —
+either direction works, whichever is less fiddly on your end.
 
 BASS track is at its true composed pitch (no transpose applied) — should
 read correctly in EZbass or any standard bass VST/amp sim out of the box.
